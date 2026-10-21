@@ -1,0 +1,24 @@
+.DS_Store
+docs/
+# Keep local documentation and agent instructions out of the repository.
+*.md
+*.MD
+.agents/
+.codex/
+DerivedData/
+build/
+.build/
+.swiftpm/
+xcuserdata/
+*.xcuserstate
+*.ipa
+*.dSYM/
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*.mobileprovision
+*service-account*.json
+GoogleService-Info.plist
+Config/Local.xcconfig
