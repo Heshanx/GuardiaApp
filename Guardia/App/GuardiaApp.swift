@@ -24,7 +24,8 @@ private struct BootstrapView: View {
         .task {
             guard store == nil, startupError == nil else { return }
             do {
-                store = try GuardiaStore(repository: CoreDataTripRepository(), authenticator: DeviceAuthenticator())
+                store = try GuardiaStore(repository: CoreDataTripRepository(), authenticator: DeviceAuthenticator(),
+                                         contactRepository: ContactRepository())
             } catch { startupError = error.localizedDescription }
         }
     }
