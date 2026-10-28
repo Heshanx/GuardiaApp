@@ -7,6 +7,14 @@ struct TripHistoryView: View {
             List(store.trips) { trip in
                 NavigationLink {
                     Form {
+                        if let route = trip.route {
+                            Section { TripRouteMap(route: route) }
+                            Section("Route recording") {
+                                LabeledContent("Location points", value: "\(route.samples.count)")
+                                LabeledContent("Recording sessions", value: "\(route.recordingSessions.count)")
+                                Text("Blue shows the planned route; green shows recorded positions. Gaps over two minutes are not joined.").font(.footnote)
+                            }
+                        }
                         Section("Destination") { Text(trip.destination).font(.title2.bold()) }
                         Section("Trip details") {
                             LabeledContent("Status", value: trip.status.rawValue.capitalized)
@@ -17,7 +25,7 @@ struct TripHistoryView: View {
                             }
                             if let fare = trip.agreedFare { LabeledContent("Agreed fare", value: fare.formatted(.currency(code: "LKR"))) }
                         }
-                        Section { Text("This trip contains check-in details only. Route recording and alerts were not enabled.").foregroundStyle(.secondary) }
+                        Section { Text(trip.route == nil ? "This trip contains check-in details only. Route recording and alerts were not enabled." : "Route data stays on this device. Deviation checks and contact alerts were not enabled.").foregroundStyle(.secondary) }
                     }.navigationTitle("Trip details")
                 } label: {
                     HStack(spacing: 14) {

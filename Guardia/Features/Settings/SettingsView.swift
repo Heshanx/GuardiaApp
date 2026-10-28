@@ -11,10 +11,10 @@ struct SettingsView: View {
                     Button("Lock Guardia") { store.lock() }
                 }
                 Section("Data & Privacy") {
-                    Text("Your trip details and trusted contacts are stored locally on this iPhone. No online account is connected and no information is shared with contacts.")
+                    Text("Your trip details and trusted contacts are stored locally on this iPhone. Destination search and driving routes use Apple Maps over the internet. Recorded trip locations stay on this device and are not shared with contacts.")
                 }
                 Section("Coming next") {
-                    Label("Live route and deviation watch", systemImage: "map")
+                    Label("Route deviation watch", systemImage: "map")
                     Label("Community fare references", systemImage: "banknote")
                     Label("Trusted contact alerts", systemImage: "bell")
                 }

@@ -84,4 +84,58 @@ struct GuardiaAppTests {
         #expect(migrated.first?.status == .active)
     }
 
+    @Test("Route geometry and recorded points survive reopening")
+    func routeRoundTrip() throws {
+        let url = try temporaryStore()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let point = RouteCoordinate(latitude: 6.9, longitude: 79.86)
+        let now = Date(timeIntervalSince1970: 1000)
+        let route = TripRoute(origin: point, destination: point, expectedPath: [point, point], distance: 100, expectedTravelTime: 60, plannedAt: now,
+                              samples: [RouteSample(coordinate: point, timestamp: now, accuracy: 10)], recordingSessions: [now])
+        let trip = TripRecord(id: UUID(), startedAt: now, status: .active, destination: "Campus", route: route)
+        do { try CoreDataTripRepository(storeURL: url).save(trip) }
+        #expect(try CoreDataTripRepository(storeURL: url).load().first?.route == route)
+    }
+
+    @Test("The committed check-in schema migrates and keeps destination and fare")
+    func checkInSchemaMigration() throws {
+        let url = try temporaryStore()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let id = UUID()
+        do {
+            let model = NSManagedObjectModel()
+            let entity = NSEntityDescription()
+            entity.name = "Trip"
+            entity.managedObjectClassName = "NSManagedObject"
+            entity.properties = [("id", NSAttributeType.UUIDAttributeType), ("startedAt", .dateAttributeType),
+                                 ("endedAt", .dateAttributeType), ("status", .stringAttributeType),
+                                 ("destination", .stringAttributeType), ("agreedFare", .doubleAttributeType)].map { name, type in
+                let attribute = NSAttributeDescription()
+                attribute.name = name
+                attribute.attributeType = type
+                attribute.isOptional = ["endedAt", "destination", "agreedFare"].contains(name)
+                return attribute
+            }
+            entity.uniquenessConstraints = [["id"]]
+            model.entities = [entity]
+            let coordinator = NSPersistentStoreCoordinator(managedObjectModel: model)
+            let store = try coordinator.addPersistentStore(ofType: NSSQLiteStoreType, configurationName: nil, at: url)
+            let context = NSManagedObjectContext(.mainQueue)
+            context.persistentStoreCoordinator = coordinator
+            let object = NSEntityDescription.insertNewObject(forEntityName: "Trip", into: context)
+            object.setValue(id, forKey: "id")
+            object.setValue(Date(timeIntervalSince1970: 100), forKey: "startedAt")
+            object.setValue("completed", forKey: "status")
+            object.setValue("Campus", forKey: "destination")
+            object.setValue(450.0, forKey: "agreedFare")
+            try context.save()
+            try coordinator.remove(store)
+        }
+        let trip = try CoreDataTripRepository(storeURL: url).load().first
+        #expect(trip?.id == id)
+        #expect(trip?.destination == "Campus")
+        #expect(trip?.agreedFare == 450)
+        #expect(trip?.route == nil)
+    }
+
 }

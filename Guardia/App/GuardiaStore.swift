@@ -12,13 +12,17 @@ final class GuardiaStore: ObservableObject {
     private let repository: any TripRepository
     private let authenticator: any DeviceAuthenticating
     private var authenticationGeneration = 0
+    let location: TripLocationService
+    private var recordingTrip: TripRecord?
 
     var activeTrip: TripRecord? { trips.first { $0.status == .active } }
 
-    init(repository: any TripRepository, authenticator: any DeviceAuthenticating, contactRepository: ContactRepository) {
+    init(repository: any TripRepository, authenticator: any DeviceAuthenticating, contactRepository: ContactRepository, location: TripLocationService) {
+        self.location = location
         self.contactRepository = contactRepository
         self.repository = repository
         self.authenticator = authenticator
+        location.onSample = { [weak self] sample in self?.record(sample) }
     }
 
     func unlock() async {
@@ -31,6 +35,7 @@ final class GuardiaStore: ObservableObject {
             trips = try repository.load()
             contacts = try contactRepository.load()
             isUnlocked = true
+            recordingTrip = activeTrip
         } catch { message = error.localizedDescription }
     }
 
@@ -42,7 +47,7 @@ final class GuardiaStore: ObservableObject {
         message = nil
     }
 
-    func startTrip(destination: String, fare: Double?) async -> Bool {
+    func startTrip(destination: String, fare: Double?, route: TripRoute? = nil) async -> Bool {
         guard isUnlocked, activeTrip == nil, !isAuthenticating else { return false }
         let name = destination.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, fare == nil || (fare!.isFinite && fare! > 0) else { return false }
@@ -51,9 +56,18 @@ final class GuardiaStore: ObservableObject {
         defer { isAuthenticating = false }
         do {
             guard try await authenticator.unlock(), generation == authenticationGeneration, isUnlocked else { return false }
-            let trip = TripRecord(id: UUID(), startedAt: Date(), status: .active, destination: name, agreedFare: fare)
+            if let route {
+                guard let sample = location.freshSample, route.canStart(from: sample, now: Date()) else {
+                    message = "Your location or route preview has changed. Refresh the route before starting."
+                    return false
+                }
+            }
+            var trip = TripRecord(id: UUID(), startedAt: Date(), status: .active, destination: name, agreedFare: fare, route: route)
+            if trip.route != nil { trip.route?.recordingSessions.append(Date()) }
             try repository.save(trip)
             trips = try repository.load()
+            recordingTrip = trip
+            if trip.route != nil { location.startRecording() }
             return true
         } catch { message = error.localizedDescription; return false }
     }
@@ -84,14 +98,34 @@ final class GuardiaStore: ObservableObject {
         guard isUnlocked, var trip = activeTrip else { return }
         do {
             try trip.finish(as: cancelled ? .cancelled : .completed, at: Date())
-            persist(trip)
+            try repository.save(trip)
+            location.stopRecording()
+            recordingTrip = nil
+            trips = try repository.load()
         } catch { message = error.localizedDescription }
     }
 
-    private func persist(_ trip: TripRecord) {
+    func resumeRecording() {
+        guard isUnlocked, var trip = activeTrip, trip.route != nil, location.hasPermission else { return }
+        do {
+            trip.route?.recordingSessions.append(Date())
+            try repository.save(trip)
+            recordingTrip = trip
+            trips = try repository.load()
+            location.startRecording()
+        } catch { message = error.localizedDescription }
+    }
+
+    private func record(_ sample: RouteSample) {
+        guard var trip = recordingTrip, trip.status == .active, sample.timestamp >= trip.startedAt,
+              trip.route?.append(sample, now: Date()) == true else { return }
         do {
             try repository.save(trip)
-            trips = try repository.load()
-        } catch { message = "Could not save or reload your trip. \(error.localizedDescription)" }
+            recordingTrip = trip
+            if isUnlocked, let index = trips.firstIndex(where: { $0.id == trip.id }) { trips[index] = trip }
+        } catch {
+            location.stopRecording()
+            message = "Route recording paused because the location could not be saved. \(error.localizedDescription)"
+        }
     }
 }

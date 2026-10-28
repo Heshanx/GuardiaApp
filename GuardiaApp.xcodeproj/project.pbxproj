@@ -401,6 +401,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Guardia;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Use your location to plan and record your active trip route, including while the screen is locked.";
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Confirm your check-in and unlock your private trips and contacts.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -437,6 +439,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Guardia;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Use your location to plan and record your active trip route, including while the screen is locked.";
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Confirm your check-in and unlock your private trips and contacts.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

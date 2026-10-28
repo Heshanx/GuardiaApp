@@ -28,7 +28,8 @@ final class CoreDataTripRepository: TripRepository {
                              attribute("endedAt", .dateAttributeType, optional: true),
                              attribute("status", .stringAttributeType),
                              attribute("destination", .stringAttributeType, optional: true),
-                             attribute("agreedFare", .doubleAttributeType, optional: true)]
+                             attribute("agreedFare", .doubleAttributeType, optional: true),
+                             attribute("routePayload", .binaryDataAttributeType, optional: true)]
         entity.uniquenessConstraints = [["id"]]
         model.entities = [entity]
         container = NSPersistentContainer(name: "Guardia", managedObjectModel: model)
@@ -54,9 +55,12 @@ final class CoreDataTripRepository: TripRepository {
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         let metadata = try NSPersistentStoreCoordinator.metadataForPersistentStore(ofType: NSSQLiteStoreType, at: url)
         guard !model.isConfiguration(withName: nil, compatibleWithStoreMetadata: metadata) else { return }
-        let original = model.copy() as! NSManagedObjectModel
-        original.entities.first?.properties.removeAll { ["destination", "agreedFare"].contains($0.name) }
-        guard original.isConfiguration(withName: nil, compatibleWithStoreMetadata: metadata) else {
+        let candidates: [NSManagedObjectModel] = [["routePayload"], ["routePayload", "destination", "agreedFare"]].map { removed in
+            let candidate = model.copy() as! NSManagedObjectModel
+            candidate.entities.first?.properties.removeAll { removed.contains($0.name) }
+            return candidate
+        }
+        guard let original = candidates.first(where: { $0.isConfiguration(withName: nil, compatibleWithStoreMetadata: metadata) }) else {
             throw CocoaError(.persistentStoreIncompatibleVersionHash)
         }
         let mapping = try NSMappingModel.inferredMappingModel(forSourceModel: original, destinationModel: model)
@@ -84,14 +88,16 @@ final class CoreDataTripRepository: TripRepository {
                   let status = TripStatus(rawValue: raw) else {
                 throw CocoaError(.fileReadCorruptFile)
             }
+            let route = try (object.value(forKey: "routePayload") as? Data).map { try JSONDecoder().decode(TripRoute.self, from: $0) }
             return TripRecord(id: id, startedAt: start,
                               endedAt: object.value(forKey: "endedAt") as? Date, status: status,
                               destination: object.value(forKey: "destination") as? String ?? "Practice trip",
-                              agreedFare: object.value(forKey: "agreedFare") as? Double)
+                              agreedFare: object.value(forKey: "agreedFare") as? Double, route: route)
         }
     }
 
     func save(_ trip: TripRecord) throws {
+        let routePayload = try trip.route.map { try JSONEncoder().encode($0) }
         let context = container.viewContext
         let request = NSFetchRequest<NSManagedObject>(entityName: "Trip")
         request.predicate = NSPredicate(format: "id == %@", trip.id as NSUUID)
@@ -103,6 +109,7 @@ final class CoreDataTripRepository: TripRepository {
         object.setValue(trip.status.rawValue, forKey: "status")
         object.setValue(trip.destination, forKey: "destination")
         object.setValue(trip.agreedFare, forKey: "agreedFare")
+        object.setValue(routePayload, forKey: "routePayload")
         do { try context.save() } catch { context.rollback(); throw error }
     }
 }
