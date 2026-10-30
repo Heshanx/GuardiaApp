@@ -5,6 +5,8 @@ struct TripPlanView: View {
     @ObservedObject var store: GuardiaStore
     @ObservedObject private var location: TripLocationService
     @StateObject private var planner = RoutePlanner()
+    @StateObject private var fareReferences = FareReferenceService()
+    @State private var fareArea = ""
     @StateObject private var connection = ConnectionStatus()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
@@ -84,7 +86,24 @@ struct TripPlanView: View {
                 }
                 Section {
                     HStack { Text("LKR").foregroundStyle(.secondary); TextField("Agreed fare (optional)", text: $fare).keyboardType(.decimalPad).textFieldStyle(.plain).frame(minHeight: 44).focused($editingFare) }
-                } header: { Text("Agreed fare") } footer: { Text("Community fare comparisons are not connected yet.") }
+                } header: { Text("Agreed fare") } footer: { Text("Optional. Comparisons are informational, not a guaranteed price.") }
+                Section("Fare reference · Tuk-tuk") {
+                    Picker("Area", selection: $fareArea) {
+                        Text("Select area").tag("")
+                        Text("Colombo").tag("colombo")
+                        Text("Kandy").tag("kandy")
+                        Text("Galle").tag("galle")
+                    }
+                    if fareReferences.loading { ProgressView("Loading fare reports…") }
+                    if let reference = fareReferences.reference {
+                        if let quote = parsedFare { Text(reference.assessment(for: quote)).font(.headline).foregroundStyle(GuardiaStyle.accent) }
+                        LabeledContent("Reported range", value: "LKR \(reference.lower.formatted())–\(reference.upper.formatted())")
+                        LabeledContent("Median", value: reference.median.formatted(.currency(code: "LKR")))
+                    }
+                    Text(fareReferences.status).font(.footnote).foregroundStyle(.secondary)
+                    Text("Lookup uses only this selected area and a 5 km distance band. No exact coordinates are sent to Firestore.").font(.caption).foregroundStyle(.secondary)
+                    Button("Refresh fare reference") { Task { await fareReferences.load(area: fareArea, distance: planner.route?.distance) } }.disabled(fareReferences.loading)
+                }
                 Section("Location & connection") {
                     DisclosureGroup("Connection details") {
                     Label(connection.summary, systemImage: "network")
@@ -151,6 +170,9 @@ struct TripPlanView: View {
             }
         }
         .task { if location.hasPermission { location.beginPreview() } }
+        .task(id: "\(fareArea)-\(planner.route?.distance ?? 0)") {
+            await fareReferences.load(area: fareArea, distance: planner.route?.distance)
+        }
         .task(id: destination) {
             guard selectedPlace == nil, destination.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3 else { return }
             do { try await Task.sleep(for: .milliseconds(500)) } catch { return }
