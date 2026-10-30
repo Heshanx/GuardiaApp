@@ -4,6 +4,7 @@ import CoreData
 protocol TripRepository {
     func load() throws -> [TripRecord]
     func save(_ trip: TripRecord) throws
+    func deleteFinished() throws
 }
 
 /// Optional additions preserve compatibility with the original local trip store.
@@ -29,7 +30,8 @@ final class CoreDataTripRepository: TripRepository {
                              attribute("status", .stringAttributeType),
                              attribute("destination", .stringAttributeType, optional: true),
                              attribute("agreedFare", .doubleAttributeType, optional: true),
-                             attribute("routePayload", .binaryDataAttributeType, optional: true)]
+                             attribute("routePayload", .binaryDataAttributeType, optional: true),
+                             attribute("paidFare", .doubleAttributeType, optional: true)]
         entity.uniquenessConstraints = [["id"]]
         model.entities = [entity]
         container = NSPersistentContainer(name: "Guardia", managedObjectModel: model)
@@ -55,7 +57,7 @@ final class CoreDataTripRepository: TripRepository {
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         let metadata = try NSPersistentStoreCoordinator.metadataForPersistentStore(ofType: NSSQLiteStoreType, at: url)
         guard !model.isConfiguration(withName: nil, compatibleWithStoreMetadata: metadata) else { return }
-        let candidates: [NSManagedObjectModel] = [["routePayload"], ["routePayload", "destination", "agreedFare"]].map { removed in
+        let candidates: [NSManagedObjectModel] = [["paidFare"], ["paidFare", "routePayload"], ["paidFare", "routePayload", "destination", "agreedFare"]].map { removed in
             let candidate = model.copy() as! NSManagedObjectModel
             candidate.entities.first?.properties.removeAll { removed.contains($0.name) }
             return candidate
@@ -78,6 +80,16 @@ final class CoreDataTripRepository: TripRepository {
                                                ofType: NSSQLiteStoreType)
     }
 
+    func deleteFinished() throws {
+        let context = container.viewContext
+        let request = NSFetchRequest<NSManagedObject>(entityName: "Trip")
+        request.predicate = NSPredicate(format: "status != %@", TripStatus.active.rawValue)
+        do {
+            for object in try context.fetch(request) { context.delete(object) }
+            try context.save()
+        } catch { context.rollback(); throw error }
+    }
+
     func load() throws -> [TripRecord] {
         let request = NSFetchRequest<NSManagedObject>(entityName: "Trip")
         request.sortDescriptors = [NSSortDescriptor(key: "startedAt", ascending: false)]
@@ -92,7 +104,7 @@ final class CoreDataTripRepository: TripRepository {
             return TripRecord(id: id, startedAt: start,
                               endedAt: object.value(forKey: "endedAt") as? Date, status: status,
                               destination: object.value(forKey: "destination") as? String ?? "Practice trip",
-                              agreedFare: object.value(forKey: "agreedFare") as? Double, route: route)
+                              agreedFare: object.value(forKey: "agreedFare") as? Double, paidFare: object.value(forKey: "paidFare") as? Double, route: route)
         }
     }
 
@@ -109,6 +121,7 @@ final class CoreDataTripRepository: TripRepository {
         object.setValue(trip.status.rawValue, forKey: "status")
         object.setValue(trip.destination, forKey: "destination")
         object.setValue(trip.agreedFare, forKey: "agreedFare")
+        object.setValue(trip.paidFare, forKey: "paidFare")
         object.setValue(routePayload, forKey: "routePayload")
         do { try context.save() } catch { context.rollback(); throw error }
     }

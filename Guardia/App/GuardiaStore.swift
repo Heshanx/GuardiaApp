@@ -14,8 +14,11 @@ final class GuardiaStore: ObservableObject {
     private var authenticationGeneration = 0
     let location: TripLocationService
     private var recordingTrip: TripRecord?
+    private var escalationTask: Task<Void, Never>?
     private var outsideSince: Date?
     private var lastCheckIn: Date?
+    let sharing = LiveSharingService()
+    let liveActivity = TripLiveActivity()
     let notifications = CheckInNotifications()
 
     var activeTrip: TripRecord? { trips.first { $0.status == .active } }
@@ -39,6 +42,7 @@ final class GuardiaStore: ObservableObject {
             contacts = try contactRepository.load()
             isUnlocked = true
             recordingTrip = activeTrip
+            scheduleCheckInDeadline()
         } catch { message = error.localizedDescription }
     }
 
@@ -72,6 +76,7 @@ final class GuardiaStore: ObservableObject {
             recordingTrip = trip
             outsideSince = nil
             lastCheckIn = nil
+            liveActivity.update(trip); sharing.publish(trip, force: true)
             if trip.route != nil { location.startRecording() }
             return true
         } catch { message = error.localizedDescription; return false }
@@ -104,7 +109,10 @@ final class GuardiaStore: ObservableObject {
         do {
             try trip.finish(as: cancelled ? .cancelled : .completed, at: Date())
             try repository.save(trip)
+            Task { await sharing.stop() }
+            liveActivity.end(trip)
             location.stopRecording()
+            escalationTask?.cancel()
             notifications.clear()
             recordingTrip = nil
             trips = try repository.load()
@@ -117,6 +125,7 @@ final class GuardiaStore: ObservableObject {
             trip.route?.recordingSessions.append(Date())
             try repository.save(trip)
             recordingTrip = trip
+            liveActivity.update(trip); sharing.publish(trip, force: true)
             trips = try repository.load()
             outsideSince = nil
             location.startRecording()
@@ -130,11 +139,92 @@ final class GuardiaStore: ObservableObject {
         do {
             try repository.save(trip)
             recordingTrip = trip
+            liveActivity.update(trip); sharing.publish(trip, force: true)
             trips = try repository.load()
+            escalationTask?.cancel()
             notifications.clear()
             outsideSince = nil
             lastCheckIn = Date()
         } catch { message = error.localizedDescription }
+    }
+
+    func updateContact(_ contact: TrustedContact) -> Bool {
+        guard isUnlocked, ContactValidation.isValid(name: contact.name, phone: contact.phone),
+              contacts.contains(where: { $0.id == contact.id }) else { return false }
+        guard !contacts.contains(where: { $0.id != contact.id && $0.phone.filter(\.isNumber) == contact.phone.filter(\.isNumber) }) else {
+            message = "That number is already saved."; return false
+        }
+        do { try contactRepository.save(contact); contacts = try contactRepository.load(); return true }
+        catch { message = error.localizedDescription; return false }
+    }
+
+    func savePaidFare(tripID: UUID, amount: Double?) -> Bool {
+        guard isUnlocked, var trip = trips.first(where: { $0.id == tripID }), trip.status != .active,
+              amount == nil || (amount!.isFinite && amount! > 0) else { return false }
+        trip.paidFare = amount
+        do { try repository.save(trip); trips = try repository.load(); return true }
+        catch { message = error.localizedDescription; return false }
+    }
+
+    func deleteHistory() async {
+        guard isUnlocked, !isAuthenticating else { return }
+        isAuthenticating = true
+        let generation = authenticationGeneration
+        defer { isAuthenticating = false }
+        do {
+            guard try await authenticator.unlock(), isUnlocked, generation == authenticationGeneration else { return }
+            try repository.deleteFinished()
+            trips = try repository.load()
+            message = "Previous local trip history deleted. Your active trip and contacts were kept."
+        } catch { message = error.localizedDescription }
+    }
+
+    func deleteCloudData() async {
+        guard isUnlocked, !isAuthenticating else { return }
+        isAuthenticating = true
+        let version = authenticationGeneration
+        defer { isAuthenticating = false }
+        do {
+            guard try await authenticator.unlock(), isUnlocked, version == authenticationGeneration else { return }
+            try await sharing.deleteAll()
+            message = sharing.status
+        } catch { message = error.localizedDescription }
+    }
+
+    func manualCheckIn() {
+        guard isUnlocked, var trip = activeTrip else { return }
+        if trip.route == nil {
+            message = "This is a check-in-only trip. Call a trusted contact directly; route alerts need a recorded route."
+            return
+        }
+        guard !(trip.route?.checkIns ?? []).contains(where: { $0.response == nil }) else { return }
+        if trip.route?.checkIns == nil { trip.route?.checkIns = [] }
+        trip.route?.checkIns?.append(RouteCheckIn(id: UUID(), raisedAt: Date(), distance: 0, trigger: "manual"))
+        do {
+            try repository.save(trip); recordingTrip = trip; liveActivity.update(trip); sharing.publish(trip, force: true); trips = try repository.load()
+            scheduleCheckInDeadline()
+            Task { try? await notifications.post() }
+        } catch { message = error.localizedDescription }
+    }
+
+    func escalateCheckIn() {
+        guard var trip = recordingTrip, trip.status == .active,
+              let index = trip.route?.checkIns?.firstIndex(where: { $0.response == nil && $0.escalatedAt == nil }) else { return }
+        trip.route?.checkIns?[index].escalatedAt = Date()
+        do {
+            try repository.save(trip); recordingTrip = trip; liveActivity.update(trip); sharing.publish(trip, force: true)
+            if isUnlocked { trips = try repository.load() }
+        } catch { message = error.localizedDescription }
+    }
+
+    private func scheduleCheckInDeadline() {
+        escalationTask?.cancel()
+        guard let check = recordingTrip?.route?.checkIns?.first(where: { $0.response == nil && $0.escalatedAt == nil }) else { return }
+        escalationTask = Task { [weak self] in
+            do { try await Task.sleep(for: .seconds(max(0, check.deadline.timeIntervalSinceNow))) } catch { return }
+            guard !Task.isCancelled else { return }
+            self?.escalateCheckIn()
+        }
     }
 
     private func record(_ sample: RouteSample) {
@@ -157,7 +247,9 @@ final class GuardiaStore: ObservableObject {
             }
             try repository.save(trip)
             recordingTrip = trip
+            liveActivity.update(trip); sharing.publish(trip)
             if (trip.route?.checkIns?.count ?? 0) > previousCount {
+                scheduleCheckInDeadline()
                 Task {
                     do { try await notifications.post() }
                     catch { message = "Check-in saved, but its notification could not be displayed." }

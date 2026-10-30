@@ -6,13 +6,18 @@ struct ActiveTripView: View {
     @ObservedObject private var location: TripLocationService
     let trip: TripRecord
     @State private var confirmEnd = false
+    @State private var fullMap = false
+    @State private var confirmAlert = false
     @Environment(\.horizontalSizeClass) private var sizeClass
     init(store: GuardiaStore, trip: TripRecord) { self.store = store; self.location = store.location; self.trip = trip }
     var body: some View {
         let layout = sizeClass == .regular ? AnyLayout(HStackLayout(alignment: .top, spacing: 24)) : AnyLayout(VStackLayout(alignment: .leading, spacing: 18))
         layout {
             if let route = trip.route {
-                TripRouteMap(route: route, showsUser: location.isRecording, height: sizeClass == .regular ? 560 : 420)
+                VStack {
+                    TripRouteMap(route: route, showsUser: location.isRecording, height: sizeClass == .regular ? 560 : 420)
+                    Button { fullMap = true } label: { Label("Full-screen map", systemImage: "arrow.up.left.and.arrow.down.right") }
+                }
 
             }
             GuardiaCard {
@@ -38,11 +43,16 @@ struct ActiveTripView: View {
                         }
                     }
                 } else { Text("This earlier trip contains check-in details only.").font(.footnote) }
-                Text("Route check-ins are saved locally. Contacts are not notified.").font(.footnote).foregroundStyle(.secondary)
+                LiveSharingPanel(store: store)
+                Button("Raise manual check-in", role: .destructive) { confirmAlert = true }
                 Button("End trip") { confirmEnd = true }.buttonStyle(.borderedProminent)
             }
         }
-        .sheet(item: Binding(get: { trip.route?.checkIns?.first(where: { $0.response == nil }) }, set: { _ in })) { check in
+        .fullScreenCover(isPresented: $fullMap) { FullTripMapView(store: store) }
+        .confirmationDialog("Raise a manual route check-in?", isPresented: $confirmAlert, titleVisibility: .visible) {
+            Button("Raise check-in") { store.manualCheckIn() }
+        } message: { Text("Uses the same check-in and countdown as a route deviation. This does not call emergency services.") }
+        .sheet(item: Binding(get: { fullMap ? nil : trip.route?.checkIns?.first(where: { $0.response == nil }) }, set: { _ in })) { check in
             RouteCheckInSheet(store: store, check: check).presentationDetents([.medium, .large]).presentationDragIndicator(.visible).interactiveDismissDisabled()
         }
         .onDisappear { location.endPreview() }

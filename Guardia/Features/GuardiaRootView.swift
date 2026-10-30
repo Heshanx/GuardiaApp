@@ -5,6 +5,7 @@ struct GuardiaRootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.horizontalSizeClass) private var sizeClass
     @AppStorage("completedIntroduction") private var completedIntroduction = false
+    @State private var autoUnlockAttempted = false
     @State private var section: GuardiaSection? = .home
 
     var body: some View {
@@ -52,13 +53,18 @@ struct GuardiaRootView: View {
                 }.background(GuardiaStyle.background)
             }
         }
+        .task(id: scenePhase) {
+            guard scenePhase == .active, !store.isUnlocked, !autoUnlockAttempted else { return }
+            autoUnlockAttempted = true
+            await store.unlock()
+        }
         .tint(GuardiaStyle.accent)
         .overlay {
             if scenePhase != .active {
                 Color(uiColor: .systemBackground).ignoresSafeArea().overlay { Label("Guardia", systemImage: "lock.shield") }
             }
         }
-        .onChange(of: scenePhase) { _, phase in if phase == .background { store.lock() } }
+        .onChange(of: scenePhase) { _, phase in if phase == .background { autoUnlockAttempted = false; store.lock() } }
         .alert("Guardia", isPresented: Binding(get: { store.message != nil }, set: { if !$0 { store.message = nil } })) {
             Button("OK") { store.message = nil }
         } message: { Text(store.message ?? "") }

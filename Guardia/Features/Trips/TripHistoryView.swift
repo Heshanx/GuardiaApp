@@ -31,8 +31,9 @@ struct TripHistoryView: View {
                                 LabeledContent("Duration", value: duration(from: trip.startedAt, to: end))
                             }
                             if let fare = trip.agreedFare { LabeledContent("Agreed fare", value: fare.formatted(.currency(code: "LKR"))) }
+                            if let paid = trip.paidFare { LabeledContent("Fare paid", value: paid.formatted(.currency(code: "LKR"))) }
                         }
-                        Section { Text(trip.route == nil ? "This trip contains check-in details only. Route recording and alerts were not enabled." : "Route data and check-in responses stay on this device. Contact alerts are not connected.").foregroundStyle(.secondary) }
+                        Section { Text(trip.route == nil ? "This trip contains check-in details only. Route recording and alerts were not enabled." : "Full recorded traces and check-in responses stay on this device. If live sharing was enabled, latest positions and alert state were available to people with your link.").foregroundStyle(.secondary) }
                     }.navigationTitle("Trip details")
                 } label: {
                     HStack(spacing: 14) {

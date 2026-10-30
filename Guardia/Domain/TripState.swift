@@ -9,6 +9,7 @@ struct TripRecord: Identifiable {
     var status: TripStatus
     var destination: String = "Practice trip"
     var agreedFare: Double? = nil
+    var paidFare: Double? = nil
     var route: TripRoute? = nil
 }
 

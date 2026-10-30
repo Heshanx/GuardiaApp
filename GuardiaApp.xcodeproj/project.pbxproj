@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		AABB00000000000000000001 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = AABB00000000000000000002 /* FirebaseCore */; };
+		CCDDAA000000000000000002 /* Shared/TripActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCDDAA000000000000000001 /* Shared/TripActivityAttributes.swift */; };
+		CCDDAA000000000000000003 /* Shared/TripActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCDDAA000000000000000001 /* Shared/TripActivityAttributes.swift */; };
+		CCDDAA000000000000000006 /* GuardiaLiveActivity.appex in Embed Live Activity */ = {isa = PBXBuildFile; fileRef = CCDDAA000000000000000005 /* GuardiaLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,12 +28,35 @@
 			remoteGlobalIDString = 938461B9309131EB007B1FF7;
 			remoteInfo = GuardiaApp;
 		};
+		CCDDAA00000000000000000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 938461B2309131EB007B1FF7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CCDDAA00000000000000000C;
+			remoteInfo = GuardiaLiveActivity;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CCDDAA00000000000000000A /* Embed Live Activity */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				CCDDAA000000000000000006 /* GuardiaLiveActivity.appex in Embed Live Activity */,
+			);
+			name = "Embed Live Activity";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		938461BA309131EB007B1FF7 /* GuardiaApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GuardiaApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		938461C7309131F5007B1FF7 /* GuardiaAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GuardiaAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		938461D1309131F5007B1FF7 /* GuardiaAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GuardiaAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CCDDAA000000000000000001 /* Shared/TripActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/TripActivityAttributes.swift; sourceTree = "<group>"; };
+		CCDDAA000000000000000005 /* GuardiaLiveActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; path = GuardiaLiveActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -47,6 +73,11 @@
 		938461D4309131F5007B1FF7 /* GuardiaApp/GuardiaAppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = GuardiaApp/GuardiaAppUITests;
+			sourceTree = "<group>";
+		};
+		CCDDAA000000000000000004 /* GuardiaLiveActivity */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = GuardiaLiveActivity;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -74,6 +105,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CCDDAA000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -81,6 +119,8 @@
 			isa = PBXGroup;
 			children = (
 				938461BC309131EB007B1FF7 /* Guardia */,
+				CCDDAA000000000000000001 /* Shared/TripActivityAttributes.swift */,
+				CCDDAA000000000000000004 /* GuardiaLiveActivity */,
 				938461CA309131F5007B1FF7 /* GuardiaApp/GuardiaAppTests */,
 				938461D4309131F5007B1FF7 /* GuardiaApp/GuardiaAppUITests */,
 				938461BB309131EB007B1FF7 /* Products */,
@@ -90,6 +130,7 @@
 		938461BB309131EB007B1FF7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				CCDDAA000000000000000005 /* GuardiaLiveActivity.appex */,
 				938461BA309131EB007B1FF7 /* GuardiaApp.app */,
 				938461C7309131F5007B1FF7 /* GuardiaAppTests.xctest */,
 				938461D1309131F5007B1FF7 /* GuardiaAppUITests.xctest */,
@@ -104,6 +145,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 938461DB309131F5007B1FF7 /* Build configuration list for PBXNativeTarget "GuardiaApp" */;
 			buildPhases = (
+				CCDDAA00000000000000000A /* Embed Live Activity */,
 				938461B6309131EB007B1FF7 /* Sources */,
 				938461B7309131EB007B1FF7 /* Frameworks */,
 				938461B8309131EB007B1FF7 /* Resources */,
@@ -111,6 +153,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				CCDDAA00000000000000000D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				938461BC309131EB007B1FF7 /* Guardia */,
@@ -169,6 +212,26 @@
 			productReference = 938461D1309131F5007B1FF7 /* GuardiaAppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		CCDDAA00000000000000000C /* GuardiaLiveActivity */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CCDDAA00000000000000000E /* Build configuration list for PBXNativeTarget "GuardiaLiveActivity" */;
+			buildPhases = (
+				CCDDAA000000000000000007 /* Sources */,
+				CCDDAA000000000000000008 /* Frameworks */,
+				CCDDAA000000000000000009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CCDDAA000000000000000004 /* GuardiaLiveActivity */,
+			);
+			name = GuardiaLiveActivity;
+			productName = GuardiaLiveActivity;
+			productReference = CCDDAA000000000000000005 /* GuardiaLiveActivity.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -209,6 +272,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				CCDDAA00000000000000000C /* GuardiaLiveActivity */,
 				938461B9309131EB007B1FF7 /* GuardiaApp */,
 				938461C6309131F5007B1FF7 /* GuardiaAppTests */,
 				938461D0309131F5007B1FF7 /* GuardiaAppUITests */,
@@ -238,6 +302,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CCDDAA000000000000000009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -245,6 +316,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CCDDAA000000000000000002 /* Shared/TripActivityAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -262,6 +334,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CCDDAA000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CCDDAA000000000000000003 /* Shared/TripActivityAttributes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -274,6 +354,11 @@
 			isa = PBXTargetDependency;
 			target = 938461B9309131EB007B1FF7 /* GuardiaApp */;
 			targetProxy = 938461D2309131F5007B1FF7 /* PBXContainerItemProxy */;
+		};
+		CCDDAA00000000000000000D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CCDDAA00000000000000000C /* GuardiaLiveActivity */;
+			targetProxy = CCDDAA00000000000000000B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -414,6 +499,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Confirm your check-in and unlock your private trips and contacts.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Use your location to plan and record your active trip route, including while the screen is locked.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -452,6 +538,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Confirm your check-in and unlock your private trips and contacts.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Use your location to plan and record your active trip route, including while the screen is locked.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -559,6 +646,54 @@
 			};
 			name = Release;
 		};
+		CCDDAA00000000000000000F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XM3TAGU9B6;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/LiveActivity-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.GuardiaApp.LiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CCDDAA000000000000000010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XM3TAGU9B6;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/LiveActivity-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.GuardiaApp.LiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -594,6 +729,15 @@
 			buildConfigurations = (
 				938461E2309131F5007B1FF7 /* Debug */,
 				938461E3309131F5007B1FF7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CCDDAA00000000000000000E /* Build configuration list for PBXNativeTarget "GuardiaLiveActivity" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CCDDAA00000000000000000F /* Debug */,
+				CCDDAA000000000000000010 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

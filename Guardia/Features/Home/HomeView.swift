@@ -37,7 +37,7 @@ struct HomeView: View {
                 }.padding(24).frame(maxWidth: store.activeTrip == nil ? 760 : 1200).frame(maxWidth: .infinity)
             }.background(GuardiaStyle.background).navigationTitle(store.activeTrip == nil ? "" : "Your trip").navigationBarTitleDisplayMode(.inline)
                 .sheet(isPresented: $showPlan) { TripPlanView(store: store).presentationDetents([.large]).presentationDragIndicator(.visible) }
-                .sheet(item: $endedTrip) { TripCompletionView(trip: $0) }
+                .sheet(item: $endedTrip) { TripCompletionView(store: store, trip: $0) }
                 .onChange(of: store.activeTrip?.id) { old, new in
                     if let old, new == nil { endedTrip = store.trips.first { $0.id == old } }
                 }

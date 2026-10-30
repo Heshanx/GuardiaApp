@@ -42,7 +42,9 @@ final class ContactRepository {
 
     func save(_ contact: TrustedContact) throws {
         let context = container.viewContext
-        let object = NSEntityDescription.insertNewObject(forEntityName: "TrustedContact", into: context)
+        let request = NSFetchRequest<NSManagedObject>(entityName: "TrustedContact")
+        request.predicate = NSPredicate(format: "id == %@", contact.id as NSUUID)
+        let object = try context.fetch(request).first ?? NSEntityDescription.insertNewObject(forEntityName: "TrustedContact", into: context)
         object.setValue(contact.id, forKey: "id")
         object.setValue(contact.name, forKey: "name")
         object.setValue(contact.phone, forKey: "phone")

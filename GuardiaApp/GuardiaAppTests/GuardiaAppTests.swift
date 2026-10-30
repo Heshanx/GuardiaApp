@@ -138,4 +138,35 @@ struct GuardiaAppTests {
         #expect(trip?.route == nil)
     }
 
+    @Test("Deleting history keeps active trips and final fare survives reopening")
+    func deletionPreservesActiveTrip() throws {
+        let url = try temporaryStore()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let start = Date(timeIntervalSince1970: 100)
+        let active = TripRecord(id: UUID(), startedAt: start, status: .active)
+        let finished = TripRecord(id: UUID(), startedAt: start, endedAt: start.addingTimeInterval(30), status: .completed, paidFare: 450)
+        do {
+            let repository = try CoreDataTripRepository(storeURL: url)
+            try repository.save(active); try repository.save(finished)
+        }
+        let repository = try CoreDataTripRepository(storeURL: url)
+        #expect(try repository.load().first(where: { $0.id == finished.id })?.paidFare == 450)
+        try repository.deleteFinished()
+        let remaining = try repository.load()
+        #expect(remaining.count == 1)
+        #expect(remaining.first?.id == active.id)
+    }
+
+    @Test("Contact edits update the existing row")
+    func contactUpdateDoesNotDuplicate() throws {
+        let url = try temporaryStore()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        var contact = TrustedContact(id: UUID(), name: "Amma", phone: "0772345678")
+        let repository = try ContactRepository(storeURL: url)
+        try repository.save(contact)
+        contact.name = "Updated name"; contact.phone = "0712345678"
+        try repository.save(contact)
+        #expect(try repository.load() == [contact])
+    }
+
 }

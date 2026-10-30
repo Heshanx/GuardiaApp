@@ -3,7 +3,23 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /fareReferences/{reference} {
       allow get: if resource.data.published == true;
-      allow list, create, update, delete: if false;
+      allow list, write: if false;
+    }
+    match /liveShares/{share} {
+      function owner() { return request.auth != null && resource.data.ownerUid == request.auth.uid; }
+      // An unguessable document ID is a bearer capability. No public listing.
+      allow get: if owner() || resource.data.expiresAt > request.time;
+      allow list: if owner();
+      allow create: if request.auth != null && share.size() == 64
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.expiresAt > request.time
+        && request.resource.data.expiresAt <= request.time + duration.value(1, 'd')
+        && request.resource.data.keys().hasOnly(['ownerUid','destination','state','updatedAt','expiresAt','route','lat','lon','locationAt','agreedFare']);
+      allow update: if owner() && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.expiresAt == resource.data.expiresAt
+        && request.resource.data.keys().hasOnly(['ownerUid','destination','state','updatedAt','expiresAt','route','lat','lon','locationAt','agreedFare']);
+      allow delete: if request.auth != null
+        && (!exists(/databases/$(database)/documents/liveShares/$(share)) || owner());
     }
     match /{document=**} { allow read, write: if false; }
   }

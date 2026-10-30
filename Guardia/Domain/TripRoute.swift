@@ -72,4 +72,7 @@ struct RouteCheckIn: Codable, Equatable, Sendable, Identifiable {
     let raisedAt: Date
     let distance: Double
     var response: String? = nil
+    var trigger: String? = nil
+    var escalatedAt: Date? = nil
+    var deadline: Date { raisedAt.addingTimeInterval(30) }
 }
