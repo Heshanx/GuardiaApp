@@ -144,7 +144,7 @@ final class GuardiaStore: ObservableObject {
         do {
             if let previous = trip.route?.samples.dropLast().last, sample.timestamp.timeIntervalSince(previous.timestamp) > 60 { outsideSince = nil }
             if let route = trip.route, let distance = RouteCorridor.distance(from: sample.coordinate, to: route.expectedPath) {
-                if distance - sample.accuracy > 300 {
+                if distance - sample.accuracy > (DeviationSensitivity(rawValue: UserDefaults.standard.string(forKey: "deviationSensitivity") ?? "balanced") ?? .balanced).meters {
                     if let since = outsideSince, sample.timestamp.timeIntervalSince(since) >= 15,
                        lastCheckIn == nil || sample.timestamp.timeIntervalSince(lastCheckIn!) >= 300,
                        !(route.checkIns ?? []).contains(where: { $0.response == nil }) {

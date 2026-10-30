@@ -33,6 +33,7 @@ struct TrustedContact: Identifiable, Codable, Equatable {
 enum ContactValidation {
     static func isValid(name: String, phone: String) -> Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        phone.unicodeScalars.allSatisfy { CharacterSet(charactersIn: "+0123456789 ()-.").contains($0) } &&
         (7...15).contains(phone.filter(\.isNumber).count)
     }
 }

@@ -4,6 +4,7 @@ import MapKit
 struct TripRouteMap: View {
     let route: TripRoute
     var showsUser = false
+    var height: CGFloat = 300
     var body: some View {
         Map {
             MapPolyline(coordinates: route.expectedPath.map(\.mapCoordinate)).stroke(GuardiaStyle.accent.opacity(0.18), lineWidth: 24)
@@ -16,7 +17,7 @@ struct TripRouteMap: View {
             if showsUser { UserAnnotation() }
         }
         .mapControls { MapCompass(); MapScaleView() }
-        .frame(height: 300).clipShape(RoundedRectangle(cornerRadius: 20))
+        .frame(height: height).clipShape(RoundedRectangle(cornerRadius: 20))
         .accessibilityLabel("Trip map. Blue shows the planned driving route. Green shows recorded locations.")
     }
     private var recordedSegments: [[RouteSample]] {

@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AABB00000000000000000001 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = AABB00000000000000000002 /* FirebaseCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		938461C8309131F5007B1FF7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -47,17 +51,12 @@
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
-/* Begin PBXBuildFile section */
-        AABB00000000000000000001 = {isa = PBXBuildFile; productRef = AABB00000000000000000002; };
-/* End PBXBuildFile section */
-        AABB00000000000000000002 = {isa = XCSwiftPackageProductDependency; package = AABB00000000000000000003; productName = FirebaseCore; };
-        AABB00000000000000000003 = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/firebase/firebase-ios-sdk"; requirement = {kind = exactVersion; version = 12.19.3; }; };
 /* Begin PBXFrameworksBuildPhase section */
 		938461B7309131EB007B1FF7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-                AABB00000000000000000001,
+				AABB00000000000000000001 /* FirebaseCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,7 +117,7 @@
 			);
 			name = GuardiaApp;
 			packageProductDependencies = (
-                AABB00000000000000000002,
+				AABB00000000000000000002 /* FirebaseCore */,
 			);
 			productName = GuardiaApp;
 			productReference = 938461BA309131EB007B1FF7 /* GuardiaApp.app */;
@@ -202,8 +201,10 @@
 			);
 			mainGroup = 938461B1309131EB007B1FF7;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AABB00000000000000000003 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
-            packageReferences = (AABB00000000000000000003,);
 			productRefGroup = 938461BB309131EB007B1FF7 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -598,6 +599,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AABB00000000000000000003 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = exactVersion;
+				version = 12.19.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AABB00000000000000000002 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AABB00000000000000000003 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 938461B2309131EB007B1FF7 /* Project object */;
 }

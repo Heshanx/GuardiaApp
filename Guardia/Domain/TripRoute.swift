@@ -35,6 +35,7 @@ struct TripRoute: Codable, Equatable, Sendable {
     var samples: [RouteSample] = []
     var recordingSessions: [Date] = []
     var checkIns: [RouteCheckIn]? = nil
+    var provider: String? = nil
 
     var recordedDistance: Double {
         zip(samples, samples.dropFirst()).reduce(0) { result, pair in

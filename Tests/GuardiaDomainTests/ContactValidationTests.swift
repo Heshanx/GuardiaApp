@@ -6,7 +6,7 @@ func rejectsEmptyContactName(name: String) {
     #expect(!ContactValidation.isValid(name: name, phone: "0772345678"))
 }
 
-@Test(arguments: ["", "abc", "123456", "1234567890123456"])
+@Test(arguments: ["", "abc", "123456", "1234567890123456", "abc0772345678"])
 func rejectsInvalidPhoneLength(phone: String) {
     #expect(!ContactValidation.isValid(name: "Amma", phone: phone))
 }

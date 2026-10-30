@@ -16,11 +16,16 @@ final class RoutePlanner: ObservableObject {
     private var generation = 0
     private var search: MKLocalSearch?
     private var directions: MKDirections?
+    private var roadTask: Task<TripRoute, Error>?
 
     func clear() {
         generation += 1
-        search?.cancel(); directions?.cancel()
-        results = []; route = nil; destinationName = nil; error = nil; isBusy = false
+        search?.cancel(); directions?.cancel(); roadTask?.cancel()
+        if !results.isEmpty { results = [] }
+        if route != nil { route = nil }
+        if destinationName != nil { destinationName = nil }
+        if error != nil { error = nil }
+        if isBusy { isBusy = false }
     }
 
     func searchPlaces(_ query: String, from origin: RouteSample?) async {
@@ -40,7 +45,7 @@ final class RoutePlanner: ObservableObject {
         do {
             let response = try await operation.start()
             guard token == generation else { return }
-            results = response.mapItems
+            results = Array(response.mapItems.prefix(6))
             if results.isEmpty { error = "No places found. Try a town, address or landmark." }
         } catch {
             guard token == generation else { return }
@@ -50,30 +55,24 @@ final class RoutePlanner: ObservableObject {
 
     func plan(to item: MKMapItem, from sample: RouteSample) async {
         generation += 1
-        search?.cancel(); directions?.cancel()
+        search?.cancel(); directions?.cancel(); roadTask?.cancel()
         route = nil; error = nil
         let token = generation
         destinationName = item.name ?? "Destination"
         isBusy = true
         defer { if token == generation { isBusy = false } }
-        let request = MKDirections.Request()
-        request.source = MKMapItem(location: CLLocation(latitude: sample.coordinate.latitude, longitude: sample.coordinate.longitude), address: nil)
-        request.destination = item
-        request.transportType = .automobile
-        let operation = MKDirections(request: request)
-        directions = operation
+        let origin = sample.coordinate
+        let destination = RouteCoordinate(item.location.coordinate)
+        let task = Task { try await RoadRoutingService().route(from: origin, to: destination) }
+        roadTask = task
         do {
-            let response = try await operation.calculate()
+            let planned = try await task.value
             guard token == generation else { return }
-            guard let result = response.routes.first else { error = "No driving route is available for this destination."; return }
-            var coordinates = [CLLocationCoordinate2D](repeating: CLLocationCoordinate2D(), count: result.polyline.pointCount)
-            result.polyline.getCoordinates(&coordinates, range: NSRange(location: 0, length: coordinates.count))
-            guard coordinates.count >= 2 else { error = "The route is incomplete. Choose another destination."; return }
-            route = TripRoute(origin: sample.coordinate, destination: RouteCoordinate(item.location.coordinate), expectedPath: coordinates.map(RouteCoordinate.init), distance: result.distance, expectedTravelTime: result.expectedTravelTime, plannedAt: Date())
-            destinationName = item.name ?? "Destination"
+            route = planned
         } catch {
             guard token == generation else { return }
-            self.error = "Could not calculate a driving route. Check your connection or choose another destination."
+            if (error as? URLError)?.code == .cancelled || error is CancellationError { return }
+            self.error = "Road route unavailable: \(error.localizedDescription)"
         }
     }
 }

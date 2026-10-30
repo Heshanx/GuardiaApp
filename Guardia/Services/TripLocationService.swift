@@ -28,6 +28,7 @@ final class TripLocationService: NSObject, ObservableObject, @preconcurrency CLL
 
     func beginPreview() {
         previewing = true
+        if !isRecording { manager.distanceFilter = kCLDistanceFilterNone }
         if authorization == .notDetermined { manager.requestWhenInUseAuthorization() }
         refresh()
     }
@@ -40,6 +41,7 @@ final class TripLocationService: NSObject, ObservableObject, @preconcurrency CLL
     func startRecording() {
         guard hasPermission else { status = "Allow location access in Settings to record your route."; return }
         isRecording = true
+        manager.distanceFilter = 10
         manager.allowsBackgroundLocationUpdates = true
         manager.showsBackgroundLocationIndicator = true
         refresh()

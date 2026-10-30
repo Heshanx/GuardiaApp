@@ -1,4 +1,5 @@
 import UserNotifications
+import Foundation
 
 @MainActor
 final class CheckInNotifications {
@@ -8,6 +9,7 @@ final class CheckInNotifications {
         try await center.requestAuthorization(options: [.alert])
     }
     func post() async throws {
+        if let enabled = UserDefaults.standard.object(forKey: "routeCheckInsEnabled") as? Bool, !enabled { return }
         let settings = await center.notificationSettings()
         guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else { return }
         let content = UNMutableNotificationContent()
