@@ -32,6 +32,13 @@ struct SettingsView: View {
                     }
                     if let notificationNotice { Text(notificationNotice).font(.footnote).foregroundStyle(.secondary) }
                 } header: { Text("Trip preferences") } footer: { Text("Balanced alerts suit most trips. Choose Attentive for earlier prompts or Relaxed for fewer prompts.") }
+                Section("Destination arrival alerts") {
+                    Text("Allow Always location access and notifications to receive an arrival reminder while Guardia is in the background. You still need to confirm arrival and end the trip.")
+                        .font(.footnote)
+                    Button("Open device settings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                    }
+                }
                 Section("Privacy & security") {
                     Label("Protected with Face ID or passcode", systemImage: "lock.shield")
                     Button("Lock Guardia") { store.lock() }

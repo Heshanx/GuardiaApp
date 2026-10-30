@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import CoreLocation
+import UserNotifications
 
 @MainActor
 final class TripLocationService: NSObject, ObservableObject, @preconcurrency CLLocationManagerDelegate {
@@ -90,5 +91,123 @@ final class TripLocationService: NSObject, ObservableObject, @preconcurrency CLL
         if let failure = error as? CLError, failure.code == .locationUnknown {
             status = "Waiting for a reliable location signal…"
         } else { status = error.localizedDescription }
+    }
+}
+
+
+/// Independent of the authenticated UI and continuous route recording.
+/// Only a trip identifier and destination are retained for background delivery.
+@MainActor
+final class DestinationGeofence: NSObject, @preconcurrency CLLocationManagerDelegate {
+    static let shared = DestinationGeofence()
+    private let manager = CLLocationManager()
+    private let storageKey = "guardia.destinationGeofence"
+    private let prefix = "guardia.destination."
+    private var context: Context?
+    private struct Context: Codable {
+        let tripID: UUID
+        let destination: RouteCoordinate
+        var notified: Bool = false
+    }
+    private override init() {
+        super.init()
+        if let data = UserDefaults.standard.data(forKey: storageKey) {
+            context = try? JSONDecoder().decode(Context.self, from: data)
+        }
+        manager.delegate = self
+    }
+    func restore() { registerIfAuthorized() }
+
+    func start(tripID: UUID, destination: RouteCoordinate, requestPermission: Bool = true) {
+        guard destination.isValid else { return }
+        if context?.tripID != tripID {
+            stop()
+            context = Context(tripID: tripID, destination: destination)
+            persist()
+        }
+        if requestPermission {
+            if manager.authorizationStatus == .authorizedWhenInUse {
+                manager.requestAlwaysAuthorization()
+            }
+            Task {
+                _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+            }
+        }
+        registerIfAuthorized()
+    }
+    func stop() {
+        for region in manager.monitoredRegions where region.identifier.hasPrefix(prefix) {
+            manager.stopMonitoring(for: region)
+        }
+        if let context {
+            let identifier = prefix + context.tripID.uuidString
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+            UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [identifier])
+        }
+        context = nil
+        UserDefaults.standard.removeObject(forKey: storageKey)
+    }
+    private func persist() {
+        if let context, let data = try? JSONEncoder().encode(context) {
+            UserDefaults.standard.set(data, forKey: storageKey)
+        }
+    }
+    private func registerIfAuthorized() {
+        guard let context, !context.notified,
+              manager.authorizationStatus == .authorizedAlways,
+              CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self),
+              manager.maximumRegionMonitoringDistance > 0 else { return }
+        let identifier = prefix + context.tripID.uuidString
+        for region in manager.monitoredRegions where region.identifier.hasPrefix(prefix) && region.identifier != identifier {
+            manager.stopMonitoring(for: region)
+        }
+        if let existing = manager.monitoredRegions.first(where: { $0.identifier == identifier }) {
+            manager.requestState(for: existing)
+            return
+        }
+        let region = CLCircularRegion(
+            center: CLLocationCoordinate2D(latitude: context.destination.latitude, longitude: context.destination.longitude),
+            radius: min(100, manager.maximumRegionMonitoringDistance), identifier: identifier)
+        region.notifyOnEntry = true
+        region.notifyOnExit = false
+        manager.startMonitoring(for: region)
+    }
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        if manager.authorizationStatus != .authorizedAlways {
+            for region in manager.monitoredRegions where region.identifier.hasPrefix(prefix) {
+                manager.stopMonitoring(for: region)
+            }
+        } else { registerIfAuthorized() }
+    }
+    func locationManager(_ manager: CLLocationManager, didStartMonitoringFor region: CLRegion) {
+        manager.requestState(for: region)
+    }
+    func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) { arrived(region) }
+    func locationManager(_ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion) {
+        if state == .inside { arrived(region) }
+    }
+    private func arrived(_ region: CLRegion) {
+        guard var current = context, !current.notified,
+              region.identifier == prefix + current.tripID.uuidString else { return }
+        current.notified = true
+        context = current
+        persist()
+        manager.stopMonitoring(for: region)
+        let content = UNMutableNotificationContent()
+        content.title = "Guardia arrival"
+        content.body = "You are near your destination. Open Guardia to confirm arrival and end your trip."
+        content.sound = .default
+        // Stable identifier prevents duplicate alerts; no destination name appears on the lock screen.
+        let tripID = current.tripID
+        UNUserNotificationCenter.current().add(UNNotificationRequest(
+            identifier: region.identifier, content: content, trigger: nil)) { error in
+                if error != nil {
+                    Task { @MainActor in
+                        guard self.context?.tripID == tripID else { return }
+                        self.context?.notified = false
+                        self.persist()
+                    }
+                }
+            }
     }
 }

@@ -44,6 +44,7 @@ final class GuardiaAppDelegate: NSObject, UIApplicationDelegate {
            options.bundleID == Bundle.main.bundleIdentifier {
             FirebaseApp.configure(options: options)
         }
+        DestinationGeofence.shared.restore()
         GuardiaShortcuts.updateAppShortcutParameters()
         return true
     }

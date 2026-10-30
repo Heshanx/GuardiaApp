@@ -42,6 +42,9 @@ final class GuardiaStore: ObservableObject {
             contacts = try contactRepository.load()
             isUnlocked = true
             recordingTrip = activeTrip
+            if let trip = activeTrip, let route = trip.route {
+                DestinationGeofence.shared.start(tripID: trip.id, destination: route.destination, requestPermission: false)
+            } else { DestinationGeofence.shared.stop() }
             let restoredTrip = recordingTrip
             Task { await sharing.restore(for: restoredTrip) }
             scheduleCheckInDeadline()
@@ -79,7 +82,10 @@ final class GuardiaStore: ObservableObject {
             outsideSince = nil
             lastCheckIn = nil
             liveActivity.update(trip); sharing.publish(trip, force: true)
-            if trip.route != nil { location.startRecording() }
+            if let route = trip.route {
+                location.startRecording()
+                DestinationGeofence.shared.start(tripID: trip.id, destination: route.destination)
+            }
             return true
         } catch { message = "Couldn’t complete that change. Please try again."; return false }
     }
@@ -114,6 +120,7 @@ final class GuardiaStore: ObservableObject {
             Task { await sharing.stop() }
             liveActivity.end(trip)
             location.stopRecording()
+            DestinationGeofence.shared.stop()
             escalationTask?.cancel()
             notifications.clear()
             recordingTrip = nil
@@ -131,6 +138,9 @@ final class GuardiaStore: ObservableObject {
             trips = try repository.load()
             outsideSince = nil
             location.startRecording()
+            if let route = trip.route {
+                DestinationGeofence.shared.start(tripID: trip.id, destination: route.destination)
+            }
         } catch { message = "Couldn’t complete that change. Please try again." }
     }
 
