@@ -9,7 +9,7 @@ struct ActiveTripView: View {
     @State private var confirmEnd = false
     @State private var fullMap = false
     @State private var confirmAlert = false
-    init(store: GuardiaStore, trip: TripRecord) { self.store = store; self.location = store.location }
+    init(store: GuardiaStore, trip: TripRecord) { self.store = store; self.location = store.location; self.trip = trip }
     var body: some View {
         Group {
             if trip.route != nil {

@@ -66,7 +66,7 @@ struct HomeView: View {
             Text("Where are you headed?").font(.system(.title2, design: .rounded, weight: .semibold))
             Text("Plan your route and share your journey with someone you trust.").foregroundStyle(.secondary)
             Button { showPlan = true } label: {
-                HStack { Text("Start a trip"); Spacer(); Image(systemName: "arrow.right") }
+                HStack { Text("Start a trip").padding(.horizontal, 16); Spacer(); Image(systemName: "arrow.right").padding(.horizontal, 16) }
             }.buttonStyle(GuardiaPrimaryButton())
         }
     }
