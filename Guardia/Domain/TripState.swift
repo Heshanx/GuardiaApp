@@ -39,7 +39,7 @@ enum ContactValidation {
     }
 }
 
-/// Parse the entire input; a partial number such as "450abc" is not a fare.
+
 enum FareValidation {
     static func parse(_ text: String, decimalSeparator: String = ".") -> Double? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)

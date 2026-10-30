@@ -7,7 +7,7 @@ protocol TripRepository {
     func deleteFinished() throws
 }
 
-/// Optional additions preserve compatibility with the original local trip store.
+
 @MainActor
 final class CoreDataTripRepository: TripRepository {
     private let container: NSPersistentContainer
@@ -51,8 +51,7 @@ final class CoreDataTripRepository: TripRepository {
         if let storeError { throw storeError }
     }
 
-    /// The first release used a programmatic model. Keep its schema available so
-    /// Core Data can infer a mapping even though no compiled model bundle exists.
+
     private static func migrateOriginalStoreIfNeeded(at url: URL, to model: NSManagedObjectModel) throws {
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         let metadata = try NSPersistentStoreCoordinator.metadataForPersistentStore(ofType: NSSQLiteStoreType, at: url)

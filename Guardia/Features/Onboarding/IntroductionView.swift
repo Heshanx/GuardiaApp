@@ -14,14 +14,14 @@ struct IntroductionView: View {
                         Text("Guardia").font(.largeTitle.bold())
                         Text("Calm support for every street ride.").font(.title3).multilineTextAlignment(.center)
                         Image(systemName: "point.topleft.down.to.point.bottomright.curvepath").font(.system(size: 92, weight: .ultraLight)).foregroundStyle(GuardiaStyle.accent.opacity(0.4)).padding(40).accessibilityHidden(true)
-                    }.padding(28)
+                    }.padding(28).frame(maxWidth: 620).frame(maxWidth: .infinity)
                 }
             } else if step == 1 { ContactsView(store: store) }
             else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 28) {
-                        Text("A few permissions").font(.largeTitle.bold())
-                        Text("Choose what helps keep your ride connected and private.").foregroundStyle(.secondary)
+                        Text("Make it yours").font(.largeTitle.bold())
+                        Text("Choose what works for your journey.").foregroundStyle(.secondary)
                         permission("Face ID", icon: "faceid", detail: "Confirms it’s you before a trip starts. Your device passcode remains available.")
                         permission("Location", icon: "location", detail: "Records your route during an active trip, including while your screen is locked.")
                         Button("Allow location access") { store.location.beginPreview() }
@@ -29,12 +29,12 @@ struct IntroductionView: View {
                         Button("Allow notifications") {
                             Task {
                                 do { notificationStatus = try await store.notifications.requestPermission() ? "Notifications allowed" : "You can enable notifications later in Settings." }
-                                catch { notificationStatus = error.localizedDescription }
+                                catch { notificationStatus = "Notifications aren’t available right now. You can continue." }
                             }
                         }
                         if let notificationStatus { Text(notificationStatus).font(.footnote).foregroundStyle(.secondary) }
-                        Text("Contact alerts and community fare comparisons are not connected yet.").font(.footnote).foregroundStyle(.secondary)
-                    }.padding(28).frame(maxWidth: 620)
+                        Text("You choose when to share a trip or send a message.").font(.footnote).foregroundStyle(.secondary)
+                    }.padding(28).frame(maxWidth: 620).frame(maxWidth: .infinity)
                 }
             }
             HStack {

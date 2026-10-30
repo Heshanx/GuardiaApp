@@ -39,7 +39,7 @@ struct TripRoute: Codable, Equatable, Sendable {
 
     var recordedDistance: Double {
         zip(samples, samples.dropFirst()).reduce(0) { result, pair in
-            // A gap is not a recorded road segment.
+
             guard !hasGap(from: pair.0.timestamp, to: pair.1.timestamp) else { return result }
             return result + pair.0.coordinate.distance(to: pair.1.coordinate)
         }

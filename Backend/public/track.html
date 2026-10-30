@@ -1,10 +1,79 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Guardia live trip</title>
-<style>body{font:18px system-ui;background:#f7f6f2;color:#172c48;max-width:900px;margin:auto;padding:24px}section{background:white;padding:24px;border-radius:20px}svg{width:100%;height:360px;background:#eef3fa;border-radius:16px}#state{font-size:28px;font-weight:700}small{display:block;margin-top:12px;color:#586778}@media(prefers-color-scheme:dark){body{background:#121821;color:#eef3fa}section{background:#202b38}svg{background:#192433}small{color:#bccadd}}</style>
-<h1>Guardia live trip</h1><section><div id="state" role="status">Connecting…</div><h2 id="destination"></h2><p id="freshness"></p><p id="fare"></p><svg id="route" viewBox="0 0 800 360" aria-label="Planned route and latest position diagram"></svg><a id="map" rel="noreferrer noopener" target="_blank" hidden>Open latest location in OpenStreetMap</a><small>Blue: expected route. Red: latest reported location. This diagram is not a navigation map. Updates may stop if the rider loses connection or closes the app. No emergency service is contacted.</small></section>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="guardia-project" content="guardia-a63bd">
+<title>Guardia live trip</title>
+<style>
+body{font:17px system-ui;background:#f7f6f2;color:#172c48;max-width:900px;margin:auto;padding:24px}section{background:white;padding:24px;border-radius:20px}svg{width:100%;height:360px;background:#eef3fa;border-radius:16px}#state{font-size:28px;font-weight:700}#connection{font-weight:600}small{display:block;margin-top:12px;color:#586778}.stale{color:#a14514}button{font:inherit;padding:8px 16px;border:1px solid #789;border-radius:10px;background:transparent;color:inherit;margin:12px 0}@media(prefers-color-scheme:dark){body{background:#121821;color:#eef3fa}section{background:#202b38}svg{background:#192433}small{color:#bccadd}.stale{color:#ffc38e}}
+</style>
+</head>
+<body>
+<h1>Guardia live trip</h1>
+<section>
+<div id="state" role="status" aria-live="polite">Connecting…</div>
+<p id="connection" role="status"></p><h2 id="destination"></h2><p id="freshness"></p><p id="fare"></p>
+<svg id="route" viewBox="0 0 800 360" role="img" aria-label="Planned route and latest position diagram"></svg>
+<a id="map" rel="noreferrer noopener" target="_blank" hidden>Open latest location in OpenStreetMap</a><br>
+<button id="retry" type="button">Refresh now</button>
+<small>Blue: expected route. Red: last reported position. This is a route diagram, not a navigation map. Check the GPS age: updates can stop if the rider loses GPS, internet or app execution. No emergency service is contacted.</small>
+</section>
 <script>
-const id=location.hash.slice(1),el=x=>document.getElementById(x);let fetching=false;function node(tag,attrs){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const[k,v]of Object.entries(attrs))e.setAttribute(k,v);return e}function hide(){el('route').replaceChildren();el('destination').textContent='';el('fare').textContent='';el('map').hidden=true}
-async function refresh(){if(fetching||document.hidden)return;if(!/^[a-fA-F0-9]{64}$/.test(id)){el('state').textContent='Invalid sharing link';return}fetching=true;try{const r=await fetch('https://firestore.googleapis.com/v1/projects/guardia-a63bd/databases/(default)/documents/liveShares/'+id,{cache:'no-store',referrerPolicy:'no-referrer'});if(!r.ok){el('state').textContent='Link unavailable, revoked, expired or not configured';hide();return}const d=await r.json(),f=d.fields,value=k=>f[k]?.doubleValue??Number(f[k]?.integerValue);if(new Date(f.expiresAt.timestampValue)<Date.now()){el('state').textContent='Sharing expired';hide();return}el('state').textContent=f.state.stringValue==='help_requested'?'Help requested':f.state.stringValue==='check_in'?'Rider check-in pending':'Trip in progress';el('destination').textContent=f.destination.stringValue;const age=Math.max(0,Math.floor((Date.now()-new Date(f.updatedAt.timestampValue))/1000));const gpsAge=f.locationAt?Math.floor((Date.now()-new Date(f.locationAt.timestampValue))/1000):null;el('freshness').textContent='Cloud updated '+age+' seconds ago'+(gpsAge===null?' · No GPS fix':' · GPS fix '+gpsAge+' seconds old')+(age>30||gpsAge>30?' · DATA MAY BE STALE':'');el('fare').textContent=f.agreedFare?'Agreed fare: LKR '+value('agreedFare'):'';
-const path=(f.route?.arrayValue?.values??[]).map(p=>[p.mapValue.fields.lon.doubleValue,p.mapValue.fields.lat.doubleValue]).filter(p=>p.every(Number.isFinite));const lon=value('lon'),lat=value('lat'),has=Number.isFinite(lon)&&Number.isFinite(lat);const all=has?[...path,[lon,lat]]:path;const root=el('route');root.replaceChildren();if(all.length){let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;for(const p of all){minX=Math.min(minX,p[0]);maxX=Math.max(maxX,p[0]);minY=Math.min(minY,p[1]);maxY=Math.max(maxY,p[1])}const project=p=>[30+(p[0]-minX)/Math.max(.001,maxX-minX)*740,330-(p[1]-minY)/Math.max(.001,maxY-minY)*300];root.append(node('polyline',{points:path.map(project).map(p=>p.join(',')).join(' '),stroke:'#467bcc','stroke-width':5,fill:'none'}));if(has){const p=project([lon,lat]);root.append(node('circle',{cx:p[0],cy:p[1],r:8,fill:'#d44b51'}))}}el('map').hidden=!has;if(has)el('map').href='https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'#map=16/'+lat+'/'+lon}
-catch{el('state').textContent='Connection lost · displayed data may be stale'}finally{fetching=false}}
-refresh();setInterval(refresh,5000);document.addEventListener('visibilitychange',refresh);
-</script></html>
+'use strict';
+const id=location.hash.slice(1),el=x=>document.getElementById(x);
+let fetching=false, snapshot=null, offline=false;
+const number=v=>v?.doubleValue??(v?.integerValue!==undefined?Number(v.integerValue):NaN);
+const stamp=v=>v?.timestampValue?Date.parse(v.timestampValue):NaN;
+function node(tag,attrs){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const[k,v]of Object.entries(attrs))e.setAttribute(k,v);return e;}
+function hide(){snapshot=null;el('route').replaceChildren();el('destination').textContent='';el('fare').textContent='';el('freshness').textContent='';el('map').hidden=true;el('map').removeAttribute('href');}
+function freshness(){
+ if(!snapshot)return;
+ const now=Date.now();
+ if(stamp(snapshot.expiresAt)<=now){el('state').textContent='Sharing expired';el('connection').textContent='Ask the rider for a new link.';hide();return;}
+ const cloudAge=Math.max(0,Math.floor((now-stamp(snapshot.updatedAt))/1000));
+ const gps=stamp(snapshot.locationAt), gpsAge=Number.isFinite(gps)?Math.max(0,Math.floor((now-gps)/1000)):null;
+ const stale=offline||cloudAge>30||gpsAge===null||gpsAge>30;
+ el('freshness').textContent='Cloud update: '+cloudAge+' seconds ago · '+(gpsAge===null?'No GPS fix':'GPS fix: '+gpsAge+' seconds ago');
+ el('freshness').className=stale?'stale':'';
+ el('connection').textContent=offline?'Connection lost — last known data shown':stale?'Location may be stale — check with the rider':'Connected · checking every 5 seconds';
+ el('connection').className=stale?'stale':'';
+}
+function render(f){
+ const lat=number(f.lat),lon=number(f.lon),has=Number.isFinite(lat)&&Number.isFinite(lon)&&Math.abs(lat)<=90&&Math.abs(lon)<=180;
+ const path=(f.route?.arrayValue?.values??[]).map(p=>[number(p.mapValue?.fields?.lon),number(p.mapValue?.fields?.lat)]).filter(p=>p.every(Number.isFinite)&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90).slice(0,1001);
+ el('state').textContent=f.state.stringValue==='help_requested'?'Help requested':f.state.stringValue==='check_in'?'Rider check-in pending':'Trip in progress';
+ el('destination').textContent=f.destination.stringValue;
+ const fare=number(f.agreedFare);el('fare').textContent=Number.isFinite(fare)?'Agreed fare: LKR '+fare:'';
+ const all=has?[...path,[lon,lat]]:path,root=el('route');root.replaceChildren();
+ if(all.length){
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(const p of all){minX=Math.min(minX,p[0]);maxX=Math.max(maxX,p[0]);minY=Math.min(minY,p[1]);maxY=Math.max(maxY,p[1]);}
+  const project=p=>[30+(p[0]-minX)/Math.max(.001,maxX-minX)*740,330-(p[1]-minY)/Math.max(.001,maxY-minY)*300];
+  root.append(node('polyline',{points:path.map(project).map(p=>p.join(',')).join(' '),stroke:'#467bcc','stroke-width':5,fill:'none'}));
+  if(has){const p=project([lon,lat]);root.append(node('circle',{cx:p[0],cy:p[1],r:8,fill:'#d44b51'}));}
+ }
+ el('map').hidden=!has;
+ if(has)el('map').href='https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'#map=16/'+lat+'/'+lon;
+ snapshot=f;offline=false;freshness();
+}
+async function refresh(){
+ if(fetching||document.hidden)return;
+ if(!/^[a-fA-F0-9]{64}$/.test(id)){hide();el('state').textContent='Open the full sharing link';el('connection').textContent='Ask the rider to send the link from Guardia, including the part after #.';return;}
+ fetching=true;el('retry').disabled=true;
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+ try{
+  const r=await fetch('https://firestore.googleapis.com/v1/projects/guardia-a63bd/databases/(default)/documents/liveShares/'+id,{cache:'no-store',referrerPolicy:'no-referrer',signal:controller.signal});
+  if(!r.ok){hide();el('state').textContent=r.status===404?'Trip link no longer exists':r.status===403?'Link revoked, expired or sharing rules not published':'Sharing service unavailable';el('connection').textContent='Contact the rider for an active link.';return;}
+  const d=await r.json(),f=d.fields;
+  if(!f?.destination?.stringValue||!['active','check_in','help_requested'].includes(f.state?.stringValue)||!Number.isFinite(stamp(f.expiresAt))||!Number.isFinite(stamp(f.updatedAt)))throw Error('Invalid trip data');
+  render(f);
+ }catch{
+  offline=true;el('state').textContent='Connection interrupted';
+  if(snapshot)freshness();else el('connection').textContent='Could not load this trip. Check your internet connection and retry.';
+ }finally{clearTimeout(timeout);fetching=false;el('retry').disabled=false;}
+}
+el('retry').addEventListener('click',refresh);
+document.addEventListener('visibilitychange',refresh);
+refresh();setInterval(refresh,5000);setInterval(freshness,1000);
+</script>
+</body></html>

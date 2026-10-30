@@ -12,14 +12,14 @@ struct FullTripMapView: View {
                 } else { ContentUnavailableView("Trip ended", systemImage: "checkmark.circle") }
             }.navigationTitle("Live trip").navigationBarTitleDisplayMode(.inline).toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
-                ToolbarItem(placement: .bottomBar) { Button("Raise manual check-in") { confirmAlert = true }.disabled(store.activeTrip == nil) }
+                ToolbarItem(placement: .bottomBar) { Button("Request a check-in") { confirmAlert = true }.disabled(store.activeTrip == nil) }
             }
         }
-        .confirmationDialog("Raise a manual check-in?", isPresented: $confirmAlert, titleVisibility: .visible) {
-            Button("Raise check-in") { store.manualCheckIn() }
+        .confirmationDialog("Request a check-in?", isPresented: $confirmAlert, titleVisibility: .visible) {
+            Button("Continue") { store.manualCheckIn() }
         }
         .sheet(item: Binding(get: { store.activeTrip?.route?.checkIns?.first(where: { $0.response == nil }) }, set: { _ in })) { check in
-            RouteCheckInSheet(store: store, check: check).presentationDetents([.medium, .large]).interactiveDismissDisabled()
+            RouteCheckInSheet(store: store, check: check).presentationDetents([.large]).interactiveDismissDisabled().presentationSizing(.form)
         }
     }
 }

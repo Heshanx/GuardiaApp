@@ -4,7 +4,10 @@ import ActivityKit
 
 @main
 struct GuardiaWidgets: WidgetBundle {
-    var body: some Widget { GuardiaTripActivity() }
+    var body: some Widget {
+        GuardiaQuickWidget()
+        GuardiaTripActivity()
+    }
 }
 
 struct GuardiaTripActivity: Widget {

@@ -1,12 +1,13 @@
 import SwiftUI
 import FirebaseCore
+import AppIntents
 
 @main
 @MainActor
 struct GuardiaApp: App {
     @UIApplicationDelegateAdaptor(GuardiaAppDelegate.self) private var appDelegate
     var body: some Scene {
-        WindowGroup { BootstrapView() }
+        WindowGroup { BootstrapView().onOpenURL { GuardiaLaunchRequest.shared.receive($0) } }
     }
 }
 
@@ -19,7 +20,7 @@ private struct BootstrapView: View {
         Group {
             if let store { GuardiaRootView(store: store) }
             else if let startupError {
-                ContentUnavailableView("Storage unavailable", systemImage: "externaldrive.badge.exclamationmark",
+                ContentUnavailableView("Unable to open your trips", systemImage: "externaldrive.badge.exclamationmark",
                                        description: Text(startupError))
             } else { ProgressView("Opening Guardia") }
         }
@@ -29,7 +30,7 @@ private struct BootstrapView: View {
             do {
                 store = try GuardiaStore(repository: CoreDataTripRepository(), authenticator: DeviceAuthenticator(),
                                          contactRepository: ContactRepository(), location: TripLocationService())
-            } catch { startupError = error.localizedDescription }
+            } catch { startupError = "Please close Guardia and try again. Your saved trips have not been removed." }
         }
     }
 }
@@ -43,6 +44,7 @@ final class GuardiaAppDelegate: NSObject, UIApplicationDelegate {
            options.bundleID == Bundle.main.bundleIdentifier {
             FirebaseApp.configure(options: options)
         }
+        GuardiaShortcuts.updateAppShortcutParameters()
         return true
     }
 }

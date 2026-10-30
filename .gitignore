@@ -22,3 +22,8 @@ xcuserdata/
 *service-account*.json
 GoogleService-Info.plist
 Config/Local.xcconfig
+
+# Local standalone Firebase CLI and deployment state
+.firebase-tools/
+.firebase/
+firebase-debug.log

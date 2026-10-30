@@ -1,6 +1,6 @@
 import Foundation
 
-/// Local tangent-plane projection measures distance to road segments, not route vertices.
+/// Local projection measures distance to road segments
 enum RouteCorridor {
     static func distance(from point: RouteCoordinate, to path: [RouteCoordinate]) -> Double? {
         guard point.isValid, path.count >= 2, path.allSatisfy({ $0.isValid }) else { return nil }

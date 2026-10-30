@@ -42,8 +42,10 @@ final class GuardiaStore: ObservableObject {
             contacts = try contactRepository.load()
             isUnlocked = true
             recordingTrip = activeTrip
+            let restoredTrip = recordingTrip
+            Task { await sharing.restore(for: restoredTrip) }
             scheduleCheckInDeadline()
-        } catch { message = error.localizedDescription }
+        } catch { message = "Couldn’t complete that change. Please try again." }
     }
 
     func lock() {
@@ -79,7 +81,7 @@ final class GuardiaStore: ObservableObject {
             liveActivity.update(trip); sharing.publish(trip, force: true)
             if trip.route != nil { location.startRecording() }
             return true
-        } catch { message = error.localizedDescription; return false }
+        } catch { message = "Couldn’t complete that change. Please try again."; return false }
     }
 
     func addContact(name: String, phone: String) -> Bool {
@@ -93,7 +95,7 @@ final class GuardiaStore: ObservableObject {
             try contactRepository.save(TrustedContact(id: UUID(), name: name.trimmingCharacters(in: .whitespacesAndNewlines), phone: phone.trimmingCharacters(in: .whitespacesAndNewlines)))
             contacts = try contactRepository.load()
             return true
-        } catch { message = error.localizedDescription; return false }
+        } catch { message = "Couldn’t complete that change. Please try again."; return false }
     }
 
     func deleteContacts(at offsets: IndexSet) {
@@ -101,7 +103,7 @@ final class GuardiaStore: ObservableObject {
         do {
             for index in offsets { try contactRepository.delete(contacts[index]) }
             contacts = try contactRepository.load()
-        } catch { message = error.localizedDescription }
+        } catch { message = "Couldn’t complete that change. Please try again." }
     }
 
     func finishTrip(cancelled: Bool = false) {
@@ -116,7 +118,7 @@ final class GuardiaStore: ObservableObject {
             notifications.clear()
             recordingTrip = nil
             trips = try repository.load()
-        } catch { message = error.localizedDescription }
+        } catch { message = "Couldn’t complete that change. Please try again." }
     }
 
     func resumeRecording() {
@@ -129,7 +131,7 @@ final class GuardiaStore: ObservableObject {
             trips = try repository.load()
             outsideSince = nil
             location.startRecording()
-        } catch { message = error.localizedDescription }
+        } catch { message = "Couldn’t complete that change. Please try again." }
     }
 
     func respondToCheckIn(_ response: String) {
@@ -145,7 +147,7 @@ final class GuardiaStore: ObservableObject {
             notifications.clear()
             outsideSince = nil
             lastCheckIn = Date()
-        } catch { message = error.localizedDescription }
+        } catch { message = "Couldn’t complete that change. Please try again." }
     }
 
     func updateContact(_ contact: TrustedContact) -> Bool {
@@ -155,7 +157,7 @@ final class GuardiaStore: ObservableObject {
             message = "That number is already saved."; return false
         }
         do { try contactRepository.save(contact); contacts = try contactRepository.load(); return true }
-        catch { message = error.localizedDescription; return false }
+        catch { message = "Couldn’t complete that change. Please try again."; return false }
     }
 
     func savePaidFare(tripID: UUID, amount: Double?) -> Bool {
@@ -163,7 +165,7 @@ final class GuardiaStore: ObservableObject {
               amount == nil || (amount!.isFinite && amount! > 0) else { return false }
         trip.paidFare = amount
         do { try repository.save(trip); trips = try repository.load(); return true }
-        catch { message = error.localizedDescription; return false }
+        catch { message = "Couldn’t complete that change. Please try again."; return false }
     }
 
     func deleteHistory() async {
@@ -175,8 +177,8 @@ final class GuardiaStore: ObservableObject {
             guard try await authenticator.unlock(), isUnlocked, generation == authenticationGeneration else { return }
             try repository.deleteFinished()
             trips = try repository.load()
-            message = "Previous local trip history deleted. Your active trip and contacts were kept."
-        } catch { message = error.localizedDescription }
+            message = "Trip history cleared. Your current trip and contacts are kept."
+        } catch { message = "Couldn’t complete that change. Please try again." }
     }
 
     func deleteCloudData() async {
@@ -187,8 +189,8 @@ final class GuardiaStore: ObservableObject {
         do {
             guard try await authenticator.unlock(), isUnlocked, version == authenticationGeneration else { return }
             try await sharing.deleteAll()
-            message = sharing.status
-        } catch { message = error.localizedDescription }
+            message = "Shared links removed."
+        } catch { message = "Couldn’t complete that change. Please try again." }
     }
 
     func manualCheckIn() {
@@ -204,7 +206,7 @@ final class GuardiaStore: ObservableObject {
             try repository.save(trip); recordingTrip = trip; liveActivity.update(trip); sharing.publish(trip, force: true); trips = try repository.load()
             scheduleCheckInDeadline()
             Task { try? await notifications.post() }
-        } catch { message = error.localizedDescription }
+        } catch { message = "Couldn’t complete that change. Please try again." }
     }
 
     func escalateCheckIn() {
@@ -214,7 +216,7 @@ final class GuardiaStore: ObservableObject {
         do {
             try repository.save(trip); recordingTrip = trip; liveActivity.update(trip); sharing.publish(trip, force: true)
             if isUnlocked { trips = try repository.load() }
-        } catch { message = error.localizedDescription }
+        } catch { message = "Couldn’t complete that change. Please try again." }
     }
 
     private func scheduleCheckInDeadline() {
@@ -258,7 +260,7 @@ final class GuardiaStore: ObservableObject {
             if isUnlocked, let index = trips.firstIndex(where: { $0.id == trip.id }) { trips[index] = trip }
         } catch {
             location.stopRecording()
-            message = "Route recording paused because the location could not be saved. \(error.localizedDescription)"
+            message = "Your journey is paused because it couldn’t be saved. Please try again."
         }
     }
 }

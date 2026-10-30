@@ -13,18 +13,32 @@ enum GuardiaStyle {
 struct GuardiaCard<Content: View>: View {
     @ViewBuilder var content: Content
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) { content }
+        VStack(alignment: .leading, spacing: 18) { content }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(22)
-            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24))
-            .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(Color.primary.opacity(0.06)))
+            .padding(24)
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 22))
+            .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(Color.primary.opacity(0.06)))
     }
 }
 
 struct GuardiaPrimaryButton: ButtonStyle {
+    @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.font(.headline).frame(maxWidth: .infinity).padding(.vertical, 15)
             .foregroundStyle(.white).background(GuardiaStyle.buttonBlue, in: RoundedRectangle(cornerRadius: 14))
-            .opacity(configuration.isPressed ? 0.75 : 1)
+            .opacity(!enabled ? 0.45 : configuration.isPressed ? 0.75 : 1)
     }
+}
+
+/// Constrain reading width within the current window, including iPad Split View.
+private struct GuardiaSurface: ViewModifier {
+    var width: CGFloat
+    func body(content: Content) -> some View {
+        content.scrollContentBackground(.hidden)
+            .frame(maxWidth: width).frame(maxWidth: .infinity)
+            .background(GuardiaStyle.background)
+    }
+}
+extension View {
+    func guardiaSurface(width: CGFloat = 800) -> some View { modifier(GuardiaSurface(width: width)) }
 }

@@ -72,7 +72,7 @@ final class RoutePlanner: ObservableObject {
         } catch {
             guard token == generation else { return }
             if (error as? URLError)?.code == .cancelled || error is CancellationError { return }
-            self.error = "Road route unavailable: \(error.localizedDescription)"
+            self.error = "A route isn’t available right now. Try again or continue without one."
         }
     }
 }

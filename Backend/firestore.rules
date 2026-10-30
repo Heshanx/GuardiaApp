@@ -1,24 +1,52 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
     match /fareReferences/{reference} {
       allow get: if resource.data.published == true;
       allow list, write: if false;
     }
+    // Retain the private-history integration as well as the live-share workflow.
+    match /users/{uid}/trips/{tripID} {
+      function validTrip(d) {
+        return d.keys().hasAll(['destination','status','startedAt','endedAt'])
+          && d.keys().hasOnly(['destination','status','startedAt','endedAt','agreedFare'])
+          && d.destination is string && d.destination.size() > 0 && d.destination.size() <= 500
+          && d.status in ['completed','cancelled']
+          && d.startedAt is timestamp && d.endedAt is timestamp && d.endedAt >= d.startedAt
+          && d.endedAt <= request.time
+          && (!('agreedFare' in d) || (d.agreedFare is number && d.agreedFare > 0));
+      }
+      allow get, list, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid && validTrip(request.resource.data);
+    }
     match /liveShares/{share} {
-      function owner() { return request.auth != null && resource.data.ownerUid == request.auth.uid; }
-      // An unguessable document ID is a bearer capability. No public listing.
-      allow get: if owner() || resource.data.expiresAt > request.time;
+      function owner() { return signedIn() && resource.data.ownerUid == request.auth.uid; }
+      function valid(d) {
+        return share.matches('^[a-fA-F0-9]{64}$')
+          && d.keys().hasAll(['ownerUid','destination','state','updatedAt','expiresAt','route'])
+          && d.keys().hasOnly(['ownerUid','destination','state','updatedAt','expiresAt','route','lat','lon','locationAt','agreedFare'])
+          && d.ownerUid is string && d.destination is string && d.destination.size() > 0 && d.destination.size() <= 500
+          && d.state in ['active','check_in','help_requested']
+          && d.updatedAt is timestamp && d.updatedAt <= request.time + duration.value(5,'m')
+          && d.expiresAt is timestamp && d.expiresAt > request.time
+          && d.route is list && d.route.size() <= 1001
+          && ((!('lat' in d) && !('lon' in d) && !('locationAt' in d))
+            || (d.lat is number && d.lat >= -90 && d.lat <= 90
+              && d.lon is number && d.lon >= -180 && d.lon <= 180 && d.locationAt is timestamp))
+          && (!('agreedFare' in d) || (d.agreedFare is number && d.agreedFare > 0));
+      }
+      // Only a holder of the 64-character random link can retrieve an unexpired share.
+      // Public queries/listing are denied; no contact login is required.
+      allow get: if owner() || (share.matches('^[a-fA-F0-9]{64}$') && resource.data.expiresAt > request.time);
       allow list: if owner();
-      allow create: if request.auth != null && share.size() == 64
+      allow create: if signedIn() && valid(request.resource.data)
         && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.expiresAt > request.time
-        && request.resource.data.expiresAt <= request.time + duration.value(1, 'd')
-        && request.resource.data.keys().hasOnly(['ownerUid','destination','state','updatedAt','expiresAt','route','lat','lon','locationAt','agreedFare']);
-      allow update: if owner() && request.resource.data.ownerUid == resource.data.ownerUid
-        && request.resource.data.expiresAt == resource.data.expiresAt
-        && request.resource.data.keys().hasOnly(['ownerUid','destination','state','updatedAt','expiresAt','route','lat','lon','locationAt','agreedFare']);
-      allow delete: if request.auth != null
+        && request.resource.data.expiresAt <= request.time + duration.value(1,'d');
+      allow update: if owner() && valid(request.resource.data)
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.expiresAt == resource.data.expiresAt;
+      allow delete: if signedIn()
         && (!exists(/databases/$(database)/documents/liveShares/$(share)) || owner());
     }
     match /{document=**} { allow read, write: if false; }

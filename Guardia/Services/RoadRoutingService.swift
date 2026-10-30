@@ -1,7 +1,6 @@
 import Foundation
 
-/// Public OSRM endpoint for coursework testing. A production deployment requires
-/// managed/self-hosted routing. Sends endpoints only, never the recorded GPS trace.
+
 struct RoadRoutingService {
     func route(from origin: RouteCoordinate, to destination: RouteCoordinate) async throws -> TripRoute {
         let coordinates = "\(origin.longitude),\(origin.latitude);\(destination.longitude),\(destination.latitude)"

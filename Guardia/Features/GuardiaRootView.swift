@@ -6,6 +6,8 @@ struct GuardiaRootView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @AppStorage("completedIntroduction") private var completedIntroduction = false
     @State private var autoUnlockAttempted = false
+    @ObservedObject private var launchRequest = GuardiaLaunchRequest.shared
+    @State private var selectedTab = 0
     @State private var section: GuardiaSection? = .home
 
     var body: some View {
@@ -17,14 +19,15 @@ struct GuardiaRootView: View {
                     NavigationSplitView {
                         List(GuardiaSection.allCases, selection: $section) { item in
                             Label(item.title, systemImage: item.symbol).tag(item)
-                        }.navigationTitle("Guardia")
+                        }.navigationTitle("Guardia").navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 280)
                     } detail: { sectionView(section ?? .home) }
+                    .navigationSplitViewStyle(.balanced)
                 } else {
-                    TabView {
-                        HomeView(store: store).tabItem { Label("Home", systemImage: "house") }
-                        TripHistoryView(store: store).tabItem { Label("Trips", systemImage: "clock") }
-                        ContactsView(store: store).tabItem { Label("Contacts", systemImage: "person.2") }
-                        SettingsView(store: store).tabItem { Label("Settings", systemImage: "gearshape") }
+                    TabView(selection: $selectedTab) {
+                        HomeView(store: store).tabItem { Label("Home", systemImage: "house") }.tag(0)
+                        TripHistoryView(store: store).tabItem { Label("Trips", systemImage: "clock") }.tag(1)
+                        ContactsView(store: store).tabItem { Label("Contacts", systemImage: "person.2") }.tag(2)
+                        SettingsView(store: store).tabItem { Label("Settings", systemImage: "gearshape") }.tag(3)
                     }
                 }
             } else {
@@ -57,6 +60,9 @@ struct GuardiaRootView: View {
             guard scenePhase == .active, !store.isUnlocked, !autoUnlockAttempted else { return }
             autoUnlockAttempted = true
             await store.unlock()
+        }
+        .onChange(of: launchRequest.action) { _, action in
+            if action != nil { selectedTab = 0; section = .home }
         }
         .tint(GuardiaStyle.accent)
         .overlay {

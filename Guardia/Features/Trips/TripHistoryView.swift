@@ -9,7 +9,7 @@ struct TripHistoryView: View {
                     Form {
                         if let route = trip.route {
                             Section { TripRouteMap(route: route) }
-                            Section("Route recording") {
+                            Section("Along the way") {
                                 ForEach(route.checkIns ?? []) { check in
                                     VStack(alignment: .leading) {
                                         Text("Route check-in").font(.headline)
@@ -17,9 +17,9 @@ struct TripHistoryView: View {
                                         Text(check.response ?? "Not answered")
                                     }
                                 }
-                                LabeledContent("Location points", value: "\(route.samples.count)")
-                                LabeledContent("Recording sessions", value: "\(route.recordingSessions.count)")
-                                Text("Blue shows the planned route; green shows recorded positions. Gaps over two minutes are not joined.").font(.footnote)
+
+
+                                Text("Blue is your planned route. Green shows where you travelled.").font(.footnote)
                             }
                         }
                         Section("Destination") { Text(trip.destination).font(.title2.bold()) }
@@ -30,11 +30,11 @@ struct TripHistoryView: View {
                                 LabeledContent("Ended", value: end.formatted())
                                 LabeledContent("Duration", value: duration(from: trip.startedAt, to: end))
                             }
-                            if let fare = trip.agreedFare { LabeledContent("Agreed fare", value: fare.formatted(.currency(code: "LKR"))) }
-                            if let paid = trip.paidFare { LabeledContent("Fare paid", value: paid.formatted(.currency(code: "LKR"))) }
+                            if let fare = trip.agreedFare { LabeledContent("Agreed fare", value: fare.formatted(.currency(code: "LKR").precision(.fractionLength(0)))) }
+                            if let paid = trip.paidFare { LabeledContent("Fare paid", value: paid.formatted(.currency(code: "LKR").precision(.fractionLength(0)))) }
                         }
-                        Section { Text(trip.route == nil ? "This trip contains check-in details only. Route recording and alerts were not enabled." : "Full recorded traces and check-in responses stay on this device. If live sharing was enabled, latest positions and alert state were available to people with your link.").foregroundStyle(.secondary) }
-                    }.navigationTitle("Trip details")
+                        Section { Text(trip.route == nil ? "This trip was saved without a route." : "Your journey is saved privately on this device.").foregroundStyle(.secondary) }
+                    }.guardiaSurface(width: 900).navigationTitle("Trip details")
                 } label: {
                     HStack(spacing: 14) {
                         Image(systemName: trip.status == .active ? "location.fill" : "mappin.and.ellipse").foregroundStyle(GuardiaStyle.accent)
@@ -45,7 +45,7 @@ struct TripHistoryView: View {
                         }
                     }.padding(.vertical, 6)
                 }
-            }.navigationTitle("Trips").overlay {
+            }.guardiaSurface().navigationTitle("Trips").overlay {
                 if store.trips.isEmpty { ContentUnavailableView("No trips yet", systemImage: "clock", description: Text("Trips you take with Guardia will appear here.")) }
             }
         }

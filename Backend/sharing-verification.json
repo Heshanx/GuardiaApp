@@ -1,0 +1,9 @@
+{
+  "project": "guardia-a63bd",
+  "anonymousAuth": "verified HTTP 200",
+  "liveShareWrite": "blocked HTTP 403; deployment pending",
+  "trackerHosting": "missing HTTP 404; deployment pending",
+  "domainTestsPassed": 30,
+  "iosSimulatorBuild": "succeeded",
+  "physicalDeviceLiveSharing": "not yet verified"
+}

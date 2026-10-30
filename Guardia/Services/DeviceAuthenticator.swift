@@ -11,7 +11,8 @@ struct DeviceAuthenticator: DeviceAuthenticating {
         let context = LAContext()
         context.localizedCancelTitle = "Cancel"
         var error: NSError?
-        // System-managed device passcode fallback; not a remote account login.
+        
+        // faceid fail ,device passcode fallback
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
             throw error ?? NSError(domain: "Guardia.Authentication", code: 1,
                                   userInfo: [NSLocalizedDescriptionKey: "Set up a device passcode to unlock Guardia."])
