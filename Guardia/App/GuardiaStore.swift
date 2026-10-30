@@ -16,6 +16,7 @@ final class GuardiaStore: ObservableObject {
     private var recordingTrip: TripRecord?
     private var outsideSince: Date?
     private var lastCheckIn: Date?
+    let notifications = CheckInNotifications()
 
     var activeTrip: TripRecord? { trips.first { $0.status == .active } }
 
@@ -104,6 +105,7 @@ final class GuardiaStore: ObservableObject {
             try trip.finish(as: cancelled ? .cancelled : .completed, at: Date())
             try repository.save(trip)
             location.stopRecording()
+            notifications.clear()
             recordingTrip = nil
             trips = try repository.load()
         } catch { message = error.localizedDescription }
@@ -129,6 +131,7 @@ final class GuardiaStore: ObservableObject {
             try repository.save(trip)
             recordingTrip = trip
             trips = try repository.load()
+            notifications.clear()
             outsideSince = nil
             lastCheckIn = Date()
         } catch { message = error.localizedDescription }
@@ -137,6 +140,7 @@ final class GuardiaStore: ObservableObject {
     private func record(_ sample: RouteSample) {
         guard var trip = recordingTrip, trip.status == .active, sample.timestamp >= trip.startedAt,
               trip.route?.append(sample, now: Date()) == true else { return }
+        let previousCount = trip.route?.checkIns?.count ?? 0
         do {
             if let previous = trip.route?.samples.dropLast().last, sample.timestamp.timeIntervalSince(previous.timestamp) > 60 { outsideSince = nil }
             if let route = trip.route, let distance = RouteCorridor.distance(from: sample.coordinate, to: route.expectedPath) {
@@ -153,6 +157,12 @@ final class GuardiaStore: ObservableObject {
             }
             try repository.save(trip)
             recordingTrip = trip
+            if (trip.route?.checkIns?.count ?? 0) > previousCount {
+                Task {
+                    do { try await notifications.post() }
+                    catch { message = "Check-in saved, but its notification could not be displayed." }
+                }
+            }
             if isUnlocked, let index = trips.firstIndex(where: { $0.id == trip.id }) { trips[index] = trip }
         } catch {
             location.stopRecording()
