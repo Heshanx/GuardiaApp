@@ -49,8 +49,11 @@ final class RoutePlanner: ObservableObject {
     }
 
     func plan(to item: MKMapItem, from sample: RouteSample) async {
-        clear()
+        generation += 1
+        search?.cancel(); directions?.cancel()
+        route = nil; error = nil
         let token = generation
+        destinationName = item.name ?? "Destination"
         isBusy = true
         defer { if token == generation { isBusy = false } }
         let request = MKDirections.Request()

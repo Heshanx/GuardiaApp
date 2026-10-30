@@ -7,14 +7,14 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    Text("Calm support for every street ride.").font(.subheadline).foregroundStyle(.secondary)
+                    Text("Where will today take you?").font(.title2.weight(.semibold))
                     if let trip = store.activeTrip {
                         ActiveTripView(store: store, trip: trip)
                     } else {
                         GuardiaCard {
                             Image(systemName: "location.north.circle").font(.system(size: 44)).foregroundStyle(GuardiaStyle.accent)
-                            Text("Heading somewhere?").font(.largeTitle.bold())
-                            Text("Save your destination and agreed fare, then check in securely.").foregroundStyle(.secondary)
+                            Text("Let’s get you there.").font(.largeTitle.bold())
+                            Text("Choose a destination. Check your route. Travel with a private trip record.").foregroundStyle(.secondary)
                             Button { showPlan = true } label: { Label("Start Trip", systemImage: "arrow.right").frame(maxWidth: .infinity).padding(10) }
                                 .buttonStyle(.borderedProminent)
                         }

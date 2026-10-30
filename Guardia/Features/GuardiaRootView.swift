@@ -14,17 +14,29 @@ struct GuardiaRootView: View {
                     SettingsView(store: store).tabItem { Label("Settings", systemImage: "gearshape") }
                 }
             } else {
-                VStack(spacing: 24) {
-                    Image(systemName: "shield.lefthalf.filled").font(.system(size: 64)).foregroundStyle(GuardiaStyle.accent).accessibilityHidden(true)
-                    Text("Guardia").font(.largeTitle.bold())
-                    Text("Calm support for every street ride.").foregroundStyle(.secondary)
-                    Button { Task { await store.unlock() } } label: {
-                        HStack { if store.isAuthenticating { ProgressView() }; Text("Unlock Guardia") }
-                            .frame(maxWidth: .infinity).padding(10)
-                    }.buttonStyle(.borderedProminent).disabled(store.isAuthenticating)
-                    Text("Use Face ID or your device passcode to open your private trips and contacts.")
-                        .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                }.padding(32)
+                ScrollView {
+                    VStack(spacing: 24) {
+                        Spacer(minLength: 52)
+                        Image(systemName: "location.north.circle.fill")
+                            .font(.system(size: 88, weight: .light)).foregroundStyle(GuardiaStyle.accent)
+                            .padding(28).background(GuardiaStyle.accent.opacity(0.1), in: RoundedRectangle(cornerRadius: 40))
+                            .accessibilityHidden(true)
+                        VStack(spacing: 10) {
+                            Text("Guardia").font(.system(.largeTitle, design: .rounded, weight: .bold))
+                            Text("Your journey. Your peace of mind.").font(.title3).multilineTextAlignment(.center)
+                            Text("A private place for your trips and the people you trust.")
+                                .foregroundStyle(.secondary).multilineTextAlignment(.center)
+                        }
+                        Button { Task { await store.unlock() } } label: {
+                            HStack(spacing: 12) {
+                                if store.isAuthenticating { ProgressView() } else { Image(systemName: "faceid") }
+                                Text(store.isAuthenticating ? "Confirming it’s you…" : "Unlock Guardia").fontWeight(.semibold)
+                            }.frame(maxWidth: .infinity).padding(.vertical, 14)
+                        }.buttonStyle(.borderedProminent).controlSize(.large).disabled(store.isAuthenticating)
+                        Label("Protected by Face ID or your device passcode", systemImage: "lock.shield")
+                            .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    }.padding(28).frame(maxWidth: 520).frame(maxWidth: .infinity)
+                }.background(GuardiaStyle.background)
             }
         }
         .tint(GuardiaStyle.accent)
