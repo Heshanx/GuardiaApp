@@ -14,6 +14,8 @@ final class GuardiaStore: ObservableObject {
     private var authenticationGeneration = 0
     let location: TripLocationService
     private var recordingTrip: TripRecord?
+    private var outsideSince: Date?
+    private var lastCheckIn: Date?
 
     var activeTrip: TripRecord? { trips.first { $0.status == .active } }
 
@@ -67,6 +69,8 @@ final class GuardiaStore: ObservableObject {
             try repository.save(trip)
             trips = try repository.load()
             recordingTrip = trip
+            outsideSince = nil
+            lastCheckIn = nil
             if trip.route != nil { location.startRecording() }
             return true
         } catch { message = error.localizedDescription; return false }
@@ -112,7 +116,21 @@ final class GuardiaStore: ObservableObject {
             try repository.save(trip)
             recordingTrip = trip
             trips = try repository.load()
+            outsideSince = nil
             location.startRecording()
+        } catch { message = error.localizedDescription }
+    }
+
+    func respondToCheckIn(_ response: String) {
+        guard isUnlocked, var trip = activeTrip,
+              let index = trip.route?.checkIns?.firstIndex(where: { $0.response == nil }) else { return }
+        trip.route?.checkIns?[index].response = response
+        do {
+            try repository.save(trip)
+            recordingTrip = trip
+            trips = try repository.load()
+            outsideSince = nil
+            lastCheckIn = Date()
         } catch { message = error.localizedDescription }
     }
 
@@ -120,6 +138,19 @@ final class GuardiaStore: ObservableObject {
         guard var trip = recordingTrip, trip.status == .active, sample.timestamp >= trip.startedAt,
               trip.route?.append(sample, now: Date()) == true else { return }
         do {
+            if let previous = trip.route?.samples.dropLast().last, sample.timestamp.timeIntervalSince(previous.timestamp) > 60 { outsideSince = nil }
+            if let route = trip.route, let distance = RouteCorridor.distance(from: sample.coordinate, to: route.expectedPath) {
+                if distance - sample.accuracy > 300 {
+                    if let since = outsideSince, sample.timestamp.timeIntervalSince(since) >= 15,
+                       lastCheckIn == nil || sample.timestamp.timeIntervalSince(lastCheckIn!) >= 300,
+                       !(route.checkIns ?? []).contains(where: { $0.response == nil }) {
+                        if trip.route?.checkIns == nil { trip.route?.checkIns = [] }
+                        trip.route?.checkIns?.append(RouteCheckIn(id: UUID(), raisedAt: sample.timestamp, distance: distance))
+                        lastCheckIn = sample.timestamp
+                    }
+                    if outsideSince == nil { outsideSince = sample.timestamp }
+                } else { outsideSince = nil }
+            }
             try repository.save(trip)
             recordingTrip = trip
             if isUnlocked, let index = trips.firstIndex(where: { $0.id == trip.id }) { trips[index] = trip }

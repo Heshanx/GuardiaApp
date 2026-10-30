@@ -30,17 +30,17 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		938461BC309131EB007B1FF7 /* GuardiaApp */ = {
+		938461BC309131EB007B1FF7 /* Guardia */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Guardia;
 			sourceTree = "<group>";
 		};
-		938461CA309131F5007B1FF7 /* GuardiaAppTests */ = {
+		938461CA309131F5007B1FF7 /* GuardiaApp/GuardiaAppTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = GuardiaApp/GuardiaAppTests;
 			sourceTree = "<group>";
 		};
-		938461D4309131F5007B1FF7 /* GuardiaAppUITests */ = {
+		938461D4309131F5007B1FF7 /* GuardiaApp/GuardiaAppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = GuardiaApp/GuardiaAppUITests;
 			sourceTree = "<group>";
@@ -75,9 +75,9 @@
 		938461B1309131EB007B1FF7 = {
 			isa = PBXGroup;
 			children = (
-				938461BC309131EB007B1FF7 /* GuardiaApp */,
-				938461CA309131F5007B1FF7 /* GuardiaAppTests */,
-				938461D4309131F5007B1FF7 /* GuardiaAppUITests */,
+				938461BC309131EB007B1FF7 /* Guardia */,
+				938461CA309131F5007B1FF7 /* GuardiaApp/GuardiaAppTests */,
+				938461D4309131F5007B1FF7 /* GuardiaApp/GuardiaAppUITests */,
 				938461BB309131EB007B1FF7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -108,7 +108,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				938461BC309131EB007B1FF7 /* GuardiaApp */,
+				938461BC309131EB007B1FF7 /* Guardia */,
 			);
 			name = GuardiaApp;
 			packageProductDependencies = (
@@ -131,7 +131,7 @@
 				938461C9309131F5007B1FF7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				938461CA309131F5007B1FF7 /* GuardiaAppTests */,
+				938461CA309131F5007B1FF7 /* GuardiaApp/GuardiaAppTests */,
 			);
 			name = GuardiaAppTests;
 			packageProductDependencies = (
@@ -154,7 +154,7 @@
 				938461D3309131F5007B1FF7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				938461D4309131F5007B1FF7 /* GuardiaAppUITests */,
+				938461D4309131F5007B1FF7 /* GuardiaApp/GuardiaAppUITests */,
 			);
 			name = GuardiaAppUITests;
 			packageProductDependencies = (
@@ -400,11 +400,11 @@
 				DEVELOPMENT_TEAM = XM3TAGU9B6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Guardia;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Use your location to plan and record your active trip route, including while the screen is locked.";
 				INFOPLIST_FILE = Config/Info.plist;
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "Confirm your check-in and unlock your private trips and contacts.";
+				INFOPLIST_KEY_CFBundleDisplayName = Guardia;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Confirm your check-in and unlock your private trips and contacts.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Use your location to plan and record your active trip route, including while the screen is locked.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -438,11 +438,11 @@
 				DEVELOPMENT_TEAM = XM3TAGU9B6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Guardia;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Use your location to plan and record your active trip route, including while the screen is locked.";
 				INFOPLIST_FILE = Config/Info.plist;
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "Confirm your check-in and unlock your private trips and contacts.";
+				INFOPLIST_KEY_CFBundleDisplayName = Guardia;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Confirm your check-in and unlock your private trips and contacts.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Use your location to plan and record your active trip route, including while the screen is locked.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

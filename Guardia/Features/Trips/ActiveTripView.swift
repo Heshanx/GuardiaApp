@@ -36,7 +36,14 @@ struct ActiveTripView: View {
                         }
                     }
                 } else { Text("This earlier trip contains check-in details only.").font(.footnote) }
-                Text("Route deviation checks and contact alerts are not enabled yet.").font(.footnote).foregroundStyle(.secondary)
+                if let check = trip.route?.checkIns?.first(where: { $0.response == nil }) {
+                    Text("Your route looks different").font(.headline)
+                    Text("You were about \(Int(check.distance)) m from the planned route. Are you okay?")
+                    Button("I'm fine") { store.respondToCheckIn("Confirmed okay") }
+                    Button("I need help") { store.respondToCheckIn("Help requested locally; contacts not notified") }
+                    Text("Contact delivery is not connected. If you need help, contact someone directly.").font(.footnote)
+                }
+                Text("Route check-ins are saved locally. Contacts are not notified.").font(.footnote).foregroundStyle(.secondary)
                 Button("End trip") { confirmEnd = true }.buttonStyle(.borderedProminent)
             }
         }

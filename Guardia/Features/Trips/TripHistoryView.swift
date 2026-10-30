@@ -10,6 +10,13 @@ struct TripHistoryView: View {
                         if let route = trip.route {
                             Section { TripRouteMap(route: route) }
                             Section("Route recording") {
+                                ForEach(route.checkIns ?? []) { check in
+                                    VStack(alignment: .leading) {
+                                        Text("Route check-in").font(.headline)
+                                        Text(check.raisedAt, format: .dateTime)
+                                        Text(check.response ?? "Not answered")
+                                    }
+                                }
                                 LabeledContent("Location points", value: "\(route.samples.count)")
                                 LabeledContent("Recording sessions", value: "\(route.recordingSessions.count)")
                                 Text("Blue shows the planned route; green shows recorded positions. Gaps over two minutes are not joined.").font(.footnote)
@@ -25,7 +32,7 @@ struct TripHistoryView: View {
                             }
                             if let fare = trip.agreedFare { LabeledContent("Agreed fare", value: fare.formatted(.currency(code: "LKR"))) }
                         }
-                        Section { Text(trip.route == nil ? "This trip contains check-in details only. Route recording and alerts were not enabled." : "Route data stays on this device. Deviation checks and contact alerts were not enabled.").foregroundStyle(.secondary) }
+                        Section { Text(trip.route == nil ? "This trip contains check-in details only. Route recording and alerts were not enabled." : "Route data and check-in responses stay on this device. Contact alerts are not connected.").foregroundStyle(.secondary) }
                     }.navigationTitle("Trip details")
                 } label: {
                     HStack(spacing: 14) {

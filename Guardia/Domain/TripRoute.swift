@@ -34,6 +34,7 @@ struct TripRoute: Codable, Equatable, Sendable {
     let plannedAt: Date
     var samples: [RouteSample] = []
     var recordingSessions: [Date] = []
+    var checkIns: [RouteCheckIn]? = nil
 
     var recordedDistance: Double {
         zip(samples, samples.dropFirst()).reduce(0) { result, pair in
@@ -63,4 +64,11 @@ struct TripRoute: Codable, Equatable, Sendable {
         sample.isUsable(at: now) && now.timeIntervalSince(plannedAt) <= 300 &&
         now >= plannedAt && origin.distance(to: sample.coordinate) <= 200
     }
+}
+
+struct RouteCheckIn: Codable, Equatable, Sendable, Identifiable {
+    let id: UUID
+    let raisedAt: Date
+    let distance: Double
+    var response: String? = nil
 }
